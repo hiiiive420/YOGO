@@ -1,0 +1,100 @@
+{
+  "brand": {
+    "name": "YOGO",
+    "region": "Sri Lanka",
+    "tagline": "Luxury Travel"
+  },
+  "language": {
+    "label": "Language",
+    "current": "English",
+    "comingSoon": "Coming Soon",
+    "available": "Available",
+    "active": "Active language"
+  },
+  "nav": {
+    "home": "Home",
+    "itineraries": "Travel Themes",
+    "dayTours": "Day Tours",
+    "discover": "Discover Sri Lanka",
+    "accommodations": "Stays",
+    "blogs": "Blogs",
+    "contact": "Contact",
+    "admin": "Admin",
+    "adminLogin": "Admin Login",
+    "open": "Open navigation"
+  },
+  "footer": {
+    "description": "Private Sri Lankan journeys shaped around heritage stays, wild coastlines, sacred cities, tea country, and slow luxury.",
+    "explore": "Explore",
+    "concierge": "Concierge",
+    "conciergeText": "Colombo based travel design for private guests, families, and boutique groups.",
+    "availability": "Open daily for bespoke travel requests",
+    "copyright": "© {{year}} YOGO Luxury Travel",
+    "closing": "Bespoke island journeys"
+  },
+  "accommodations": {
+    "kicker": "Luxury stays",
+    "title": "Accommodations",
+    "description": "A curated collection of Sri Lankan hotels, villas, resorts, and private hideaways connected to real destination locations.",
+    "emptyTitle": "No stays published yet.",
+    "emptyDescription": "Luxury accommodations will appear here once they are added by the concierge team."
+  },
+  "home": {
+    "hero": {
+      "kicker": "Bespoke island journeys",
+      "titleLine1": "Sri Lanka,",
+      "titleLine2": "privately composed.",
+      "description": "Cinematic routes across tea hills, ancient capitals, wildlife sanctuaries, and salt kissed villas, shaped with editorial detail and white glove care.",
+      "primaryCta": "Explore Travel Themes",
+      "secondaryCta": "Design My Trip"
+    },
+    "stats": {
+      "regions": "signature regions",
+      "concierge": "private concierge",
+      "tailored": "tailored journeys"
+    },
+    "edit": {
+      "kicker": "The YOGO edit",
+      "title": "A refined foundation for extraordinary island travel.",
+      "description": "Every route is designed to feel personal from the first exchange: polished pacing, immersive place imagery, and a calm concierge rhythm for guests who want Sri Lanka handled with taste."
+    },
+    "features": {
+      "ancientTitle": "Ancient Kingdoms",
+      "ancientCopy": "Private access routes through Sigiriya, Kandy, Dambulla, and sacred cultural corridors.",
+      "teaTitle": "Tea Country",
+      "teaCopy": "Slow rail journeys, heritage bungalows, misty gardens, and curated Ceylon tastings.",
+      "coastTitle": "Wild Coast",
+      "coastCopy": "Palm lined beaches, ocean villas, national parks, and golden hour coastal dining."
+    },
+    "wild": {
+      "kicker": "Wild luxury",
+      "caption": "Safari mornings, temple evenings, and villas between both.",
+      "badge": "Signature YOGO pace",
+      "title": "Slow travel, sharp detail, and seamless private planning.",
+      "description": "From the first hello to the final airport transfer, each journey can move through heritage hotels, hill country gardens, coastal retreats, and wild landscapes without losing its sense of ease.",
+      "cta": "Discover Sri Lanka"
+    }
+  },
+  "pages": {
+    "blogs": {
+      "kicker": "Travel journal",
+      "title": "Blogs",
+      "description": "Editorial stories, seasonal features, destination guides, and reflections from Sri Lanka's most evocative places will appear here."
+    },
+    "contact": {
+      "kicker": "Concierge",
+      "title": "Contact",
+      "description": "Guest enquiries, consultation requests, and private travel planning details will be gathered here with calm concierge clarity."
+    },
+    "adminLogin": {
+      "kicker": "Restricted access",
+      "title": "Admin Login",
+      "description": "Secure access for travel designers, concierge teams, and operations staff will begin from this private entry point."
+    },
+    "shellCards": {
+      "privateAccess": "Private Access",
+      "curatedStays": "Curated Stays",
+      "islandRhythm": "Island Rhythm"
+    }
+  }
+}
