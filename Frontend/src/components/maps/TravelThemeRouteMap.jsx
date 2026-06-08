@@ -92,11 +92,19 @@ function useIsMobileMap() {
   return isMobileMap;
 }
 
-function MapFocus({ activeStop, coordinates, fitRouteToBounds, isMobileMap }) {
+function MapFocus({
+  activeStop,
+  coordinates,
+  fitRouteToBounds,
+  fitRouteToBoundsOnMobile,
+  isMobileMap,
+}) {
   const map = useMap();
   const coordinateKey = coordinates
     .map((coordinate) => coordinate?.join(','))
     .join('|');
+  const shouldFitRoute =
+    fitRouteToBounds || (fitRouteToBoundsOnMobile && isMobileMap);
 
   useEffect(() => {
     const timeoutIds = [80, 220, 480].map((delay) => window.setTimeout(() => {
@@ -145,7 +153,7 @@ function MapFocus({ activeStop, coordinates, fitRouteToBounds, isMobileMap }) {
         return;
       }
 
-      if (fitRouteToBounds && validCoordinates.length > 1) {
+      if (shouldFitRoute && validCoordinates.length > 1) {
         map.flyToBounds(validCoordinates, {
           animate: true,
           duration: 1.15,
@@ -155,7 +163,7 @@ function MapFocus({ activeStop, coordinates, fitRouteToBounds, isMobileMap }) {
         return;
       }
 
-      if (fitRouteToBounds && validCoordinates.length === 1) {
+      if (shouldFitRoute && validCoordinates.length === 1) {
         map.flyTo(validCoordinates[0], isMobileMap ? 8 : 10, {
           animate: true,
           duration: 1,
@@ -171,7 +179,14 @@ function MapFocus({ activeStop, coordinates, fitRouteToBounds, isMobileMap }) {
     } catch (error) {
       warnSkippedMapUpdate(error);
     }
-  }, [activeStop, coordinateKey, coordinates, fitRouteToBounds, isMobileMap, map]);
+  }, [
+    activeStop,
+    coordinateKey,
+    coordinates,
+    isMobileMap,
+    map,
+    shouldFitRoute,
+  ]);
 
   return null;
 }
@@ -181,6 +196,7 @@ export default function TravelThemeRouteMap({
   containerClassName = '',
   daysStatus = 'idle',
   fitRouteToBounds = true,
+  fitRouteToBoundsOnMobile = false,
   onStopSelect,
   pinSize = 'default',
   stops = [],
@@ -229,6 +245,7 @@ export default function TravelThemeRouteMap({
           activeStop={activeStop}
           coordinates={coordinates}
           fitRouteToBounds={fitRouteToBounds}
+          fitRouteToBoundsOnMobile={fitRouteToBoundsOnMobile}
           isMobileMap={isMobileMap}
         />
 

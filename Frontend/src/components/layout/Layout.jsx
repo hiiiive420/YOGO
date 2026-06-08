@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Footer from '../Footer.jsx';
+import MobileHeader from './MobileHeader.jsx';
 import Navbar from './Navbar.jsx';
+import MobileBottomNavigation from './MobileBottomNavigation.jsx';
 import FloatingSocialButtons from '../shared/FloatingSocialButtons.jsx';
 
 
@@ -27,8 +29,9 @@ export default function Layout() {
   }, [location.hash, location.pathname]);
 
   return (
-    <div className="min-h-screen bg-obsidian text-pearl">
+    <div className="min-h-screen bg-obsidian pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-pearl md:pb-0">
       <Navbar />
+      <MobileHeader />
       <AnimatePresence mode="wait">
         <motion.main
           key={location.pathname}
@@ -43,6 +46,7 @@ export default function Layout() {
      
       <Footer />
       <FloatingSocialButtons />
+      <MobileBottomNavigation />
     </div>
   );
 }

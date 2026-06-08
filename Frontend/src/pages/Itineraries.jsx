@@ -1,4 +1,12 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
@@ -6,11 +14,16 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock3,
+  Flower2,
+  Gem,
+  Leaf,
   Luggage,
   Loader2,
   MapPin,
   MessageCircle,
+  Mountain,
   Navigation,
+  PawPrint,
   Route,
   Sparkles,
 } from 'lucide-react';
@@ -99,6 +112,245 @@ function getThemeHeroImage(theme) {
   return theme?.heroImage || theme?.thumbnailImage || '';
 }
 
+function getThemeDialIcon(theme) {
+  const label = `${theme?.title || ''} ${theme?.slug || ''}`.toLowerCase();
+
+  if (/(wildlife|safari|animal)/.test(label)) return PawPrint;
+  if (/(nature|eco|forest|green)/.test(label)) return Leaf;
+  if (/(wellness|yoga|spa|meditation)/.test(label)) return Flower2;
+  if (/(luxury|premium|exclusive)/.test(label)) return Gem;
+  if (/(sport|adventure|hike|trek|active)/.test(label)) return Mountain;
+
+  return Sparkles;
+}
+
+function MobileThemeDial({
+  lockedTheme,
+  onSelect,
+  selectedThemeSlug,
+  themeHero,
+  themes,
+}) {
+  const railRef = useRef(null);
+  const itemRefs = useRef(new Map());
+  const frameRef = useRef(null);
+  const scrollTimerRef = useRef(null);
+
+  const updateRailPositions = useCallback(() => {
+    window.cancelAnimationFrame(frameRef.current);
+    frameRef.current = window.requestAnimationFrame(() => {
+      const rail = railRef.current;
+      if (!rail) return;
+
+      const railBounds = rail.getBoundingClientRect();
+
+      themes.forEach((theme) => {
+        const item = itemRefs.current.get(theme.slug);
+        if (!item) return;
+
+        const itemBounds = item.getBoundingClientRect();
+        const itemCenter = itemBounds.left + itemBounds.width / 2;
+        const positionRatio = Math.min(
+          Math.max((itemCenter - railBounds.left) / railBounds.width, 0),
+          1,
+        );
+        const curveDepth = Math.sin(positionRatio * Math.PI);
+        const y = 24 + curveDepth * 34;
+
+        item.style.transform = `translateY(${y}px)`;
+      });
+    });
+  }, [themes]);
+
+  useEffect(() => {
+    updateRailPositions();
+  }, [selectedThemeSlug, updateRailPositions]);
+
+  useEffect(() => {
+    updateRailPositions();
+    window.addEventListener('resize', updateRailPositions);
+
+    return () => {
+      window.removeEventListener('resize', updateRailPositions);
+      window.cancelAnimationFrame(frameRef.current);
+      window.clearTimeout(scrollTimerRef.current);
+    };
+  }, [updateRailPositions]);
+
+  function handleRailScroll() {
+    updateRailPositions();
+    if (lockedTheme) return;
+
+    window.clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = window.setTimeout(() => {
+      const rail = railRef.current;
+      if (!rail) return;
+
+      const railBounds = rail.getBoundingClientRect();
+      const center = railBounds.left + railBounds.width / 2;
+      let closestTheme = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      themes.forEach((theme) => {
+        const item = itemRefs.current.get(theme.slug);
+        if (!item) return;
+
+        const itemBounds = item.getBoundingClientRect();
+        const distance = Math.abs(
+          itemBounds.left + itemBounds.width / 2 - center,
+        );
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestTheme = theme;
+        }
+      });
+
+      if (closestTheme && closestTheme.slug !== selectedThemeSlug) {
+        onSelect(closestTheme);
+      }
+    }, 140);
+  }
+
+  function renderThemeContent(theme, isActive) {
+    const Icon = getThemeDialIcon(theme);
+    const iconImage = theme?.iconImage || theme?.icon || '';
+
+    return (
+      <motion.span
+        animate={{
+          opacity: isActive ? 1 : 0.72,
+        }}
+        initial={false}
+        transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+        className="flex flex-col items-center"
+      >
+        <motion.span
+          animate={{ scale: isActive ? 1.1 : 0.85 }}
+          initial={false}
+          transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+          className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full border transition duration-300 ${
+            isActive
+              ? 'border-[#283A2C] bg-[#283A2C] text-[#F1EFEC] shadow-[0_8px_18px_rgba(40,58,44,0.22)]'
+              : 'border-transparent bg-transparent text-[#283A2C]'
+          }`}
+        >
+          {iconImage ? (
+            <img
+              src={iconImage}
+              alt=""
+              className={`h-full w-full object-cover transition duration-300 ${
+                isActive ? 'scale-110 brightness-110' : 'grayscale'
+              }`}
+            />
+          ) : (
+            <Icon size={isActive ? 23 : 26} strokeWidth={isActive ? 2 : 2.25} />
+          )}
+        </motion.span>
+        <span
+          className={`mt-1 line-clamp-2 min-h-[1.25rem] max-w-[4.25rem] text-center text-[0.54rem] font-black uppercase leading-[1.15] tracking-[0.04em] transition ${
+            isActive ? 'text-[#283A2C]' : 'text-[#283A2C]/72'
+          }`}
+        >
+          {theme.title}
+        </span>
+      </motion.span>
+    );
+  }
+
+  return (
+    <div className="mt-5 md:hidden">
+      <div className="text-center">
+        <h2 className="text-xl font-black leading-none text-[#283A2C]">
+          Select Your Package
+        </h2>
+        <span className="mx-auto mt-1.5 block h-0.5 w-20 bg-[#283A2C]" />
+      </div>
+
+      <div className="relative -mx-4 mt-2 h-[8.75rem] w-[calc(100%+2rem)] overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-[-8%] top-0 h-full">
+          <svg
+            aria-hidden="true"
+            className="h-full w-full"
+            fill="none"
+            preserveAspectRatio="none"
+            viewBox="0 0 420 140"
+          >
+            <path
+              d="M-20 20 C88 52 332 52 440 20"
+              stroke="#283A2C"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M-20 92 C88 138 332 138 440 92"
+              stroke="#283A2C"
+              strokeOpacity="0.72"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </div>
+
+        <div className="pointer-events-none absolute left-1/2 top-[2.65rem] z-20 -translate-x-1/2">
+          <span className="mx-auto block h-2.5 w-0.5 bg-[#283A2C]" />
+          <span className="block h-1.5 w-1.5 rounded-full bg-[#283A2C]" />
+        </div>
+
+        <div
+          ref={railRef}
+          onScroll={handleRailScroll}
+          className="absolute inset-0 z-10 flex snap-x snap-mandatory gap-2 overflow-x-auto px-[calc(50%-2.125rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {themes.map((theme) => {
+            const isActive = theme.slug === selectedThemeSlug;
+            const sharedClassName =
+              'flex w-[4.25rem] flex-col items-center transition duration-300';
+            const setItemRef = (node) => {
+              if (node) {
+                itemRefs.current.set(theme.slug, node);
+              } else {
+                itemRefs.current.delete(theme.slug);
+              }
+            };
+
+            if (lockedTheme && themeHero) {
+              return (
+                <div
+                  key={theme._id}
+                  ref={setItemRef}
+                  className="w-[4.25rem] shrink-0 snap-center transition-transform duration-150 ease-out"
+                >
+                  <Link
+                    to={`/tour-plans/${theme.slug}`}
+                    className={sharedClassName}
+                  >
+                    {renderThemeContent(theme, isActive)}
+                  </Link>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={theme._id}
+                ref={setItemRef}
+                className="w-[4.25rem] shrink-0 snap-center transition-transform duration-150 ease-out"
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(theme)}
+                  className={sharedClassName}
+                >
+                  {renderThemeContent(theme, isActive)}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function getDayHeroImage(day) {
   return day?.heroImage || getDayLocations(day).find((location) => location?.image)?.image || '';
 }
@@ -151,7 +403,7 @@ function ItineraryListPanel({
       transition={{ duration: 0.35 }}
       className="grid w-full max-w-full min-w-0 gap-3 overflow-hidden"
     >
-      <div className="flex items-center justify-between gap-3 px-1 pb-1">
+      <div className="hidden items-center justify-between gap-3 px-1 pb-1 md:flex">
         <div className="min-w-0">
           <p className="text-[0.68rem] font-black uppercase tracking-[0.26em] text-[#283A2C]/50">
             Selected Theme
@@ -165,7 +417,44 @@ function ItineraryListPanel({
         )}
       </div>
 
-      <div className="grid w-full max-w-full min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-1">
+      {status === 'success' && itineraries.length === 0 && (
+        <div className="md:hidden">
+          <EmptyPanel
+            icon={CalendarDays}
+            title="No itineraries yet"
+            message={
+              theme
+                ? `${theme.title} Activity Packages are not published yet.`
+                : 'Activity Packages are not published yet.'
+            }
+          />
+        </div>
+      )}
+
+      {itineraries.length > 0 && (
+        <div className="flex w-full gap-2 overflow-x-auto px-1 pb-2 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {itineraries.map((itinerary) => {
+            const isActive = selectedItinerary?._id === itinerary._id;
+
+            return (
+              <button
+                key={itinerary._id}
+                type="button"
+                onClick={() => onSelect(itinerary._id)}
+                className={`max-w-[72vw] shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-black transition duration-300 ${
+                  isActive
+                    ? 'border-[#283A2C] bg-[#283A2C] text-[#F1EFEC] shadow-[0_8px_18px_rgba(40,58,44,0.16)]'
+                    : 'border-[#283A2C]/28 bg-[#FFFFFF] text-[#283A2C]'
+                }`}
+              >
+                <span className="line-clamp-1 break-words">{itinerary.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="hidden w-full max-w-full min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-1">
         {status === 'success' && itineraries.length === 0 && (
           <EmptyPanel
             icon={CalendarDays}
@@ -352,6 +641,57 @@ function ItineraryDetailsPanel({
         </div>
       </div>
     </motion.aside>
+  );
+}
+
+function MobileItinerarySummary({ itinerary, theme, viewTourHref }) {
+  if (!itinerary) return null;
+
+  const days = Number(itinerary.totalDays || 0);
+  const duration = days
+    ? `${days} Day${days === 1 ? '' : 's'} / ${Math.max(days - 1, 0)} Night${
+        days - 1 === 1 ? '' : 's'
+      }`
+    : getDurationLabel(itinerary);
+  const description =
+    itinerary.shortDescription ||
+    itinerary.fullDescription ||
+    theme?.description ||
+    '';
+
+  return (
+    <motion.article
+      key={itinerary._id}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32 }}
+      className="mt-2 overflow-hidden rounded-2xl border border-[#283A2C]/10 bg-[#FFFFFF] px-5 py-4 text-center text-[#283A2C] shadow-[0_16px_38px_rgba(40,58,44,0.10)] md:hidden"
+    >
+      <div className="flex min-w-0 items-center justify-between gap-3 text-left">
+        <h2 className="min-w-0 flex-1 break-words font-display text-2xl font-semibold leading-tight">
+          {itinerary.title}
+        </h2>
+        {duration && (
+          <span className="max-w-[48%] shrink-0 rounded-full border border-[#DADDC5] bg-[#DADDC5] px-3 py-1.5 text-center text-[0.62rem] font-black leading-tight text-[#283A2C]">
+            {duration}
+          </span>
+        )}
+      </div>
+
+      {description && (
+        <p className="mx-auto mt-3 line-clamp-3 max-w-sm break-words text-xs leading-5 text-[#283A2C]/68">
+          {description}
+        </p>
+      )}
+
+      <Link
+        to={viewTourHref}
+        className="mx-auto mt-4 inline-flex min-h-10 min-w-36 items-center justify-center gap-2 rounded-full bg-[#283A2C] px-6 text-xs font-bold text-[#F1EFEC] shadow-[0_8px_22px_rgba(40,58,44,0.24)] transition active:scale-[0.98]"
+      >
+        Explore More
+        <ArrowRight size={14} />
+      </Link>
+    </motion.article>
   );
 }
 
@@ -807,9 +1147,10 @@ export default function Itineraries({
     >
       <TravelThemeRouteMap
         activeStop={activeStop}
-        containerClassName="relative h-[260px] w-full max-w-full overflow-hidden rounded-xl border border-[#283A2C]/10 bg-[#283A2C] shadow-[0_28px_90px_rgba(40,58,44,0.20)] sm:h-[28rem] md:h-[30rem] xl:h-[33rem]"
+        containerClassName="relative h-[290px] w-full max-w-full overflow-hidden rounded-2xl border border-[#283A2C]/10 bg-[#283A2C] shadow-[0_20px_54px_rgba(40,58,44,0.16)] sm:h-[28rem] sm:rounded-xl md:h-[30rem] md:shadow-[0_28px_90px_rgba(40,58,44,0.20)] xl:h-[33rem]"
         daysStatus={daysStatus}
         fitRouteToBounds={false}
+        fitRouteToBoundsOnMobile
         onStopSelect={setActiveStop}
         pinSize="compact"
         stops={routeStops}
@@ -822,6 +1163,19 @@ export default function Itineraries({
       onContact={openContactModal}
       onStopSelect={setActiveStop}
       routeStops={routeStops}
+      theme={selectedTheme}
+      viewTourHref={
+        lockedTheme && selectedItinerary?.slug
+          ? `/itineraries/${selectedItinerary.slug}`
+          : selectedTheme?.slug
+            ? `/tour-plans/${selectedTheme.slug}`
+            : '/travel-themes'
+      }
+    />
+  );
+  const mobileDetailsPanel = (
+    <MobileItinerarySummary
+      itinerary={selectedItinerary}
       theme={selectedTheme}
       viewTourHref={
         lockedTheme && selectedItinerary?.slug
@@ -938,39 +1292,49 @@ export default function Itineraries({
         {themes.length > 0 && (
           <>
             {(!lockedTheme || themeHero) && (
-              <div className="mt-9 flex w-full max-w-full gap-3 overflow-x-auto pb-3 md:flex-wrap md:justify-center md:overflow-visible">
-                {themes.map((theme) => {
-                  const isActive = theme.slug === selectedThemeSlug;
-                  const themeButtonClassName = `shrink-0 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.16em] transition duration-300 ease-out ${
-                    isActive
-                      ? 'border-[#283A2C] bg-[#283A2C] text-[#DADDC5] shadow-[0_14px_34px_rgba(40,58,44,0.18)]'
-                      : 'border-[#283A2C] bg-[#DADDC5] text-[#283A2C] hover:bg-[#283A2C] hover:text-[#DADDC5]'
-                  }`;
+              <>
+                <MobileThemeDial
+                  lockedTheme={lockedTheme}
+                  onSelect={handleThemeSelect}
+                  selectedThemeSlug={selectedThemeSlug}
+                  themeHero={themeHero}
+                  themes={themes}
+                />
 
-                  if (lockedTheme && themeHero) {
+                <div className="mt-9 hidden w-full max-w-full gap-3 pb-3 md:flex md:flex-wrap md:justify-center md:overflow-visible">
+                  {themes.map((theme) => {
+                    const isActive = theme.slug === selectedThemeSlug;
+                    const themeButtonClassName = `shrink-0 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.16em] transition duration-300 ease-out ${
+                      isActive
+                        ? 'border-[#283A2C] bg-[#283A2C] text-[#DADDC5] shadow-[0_14px_34px_rgba(40,58,44,0.18)]'
+                        : 'border-[#283A2C] bg-[#DADDC5] text-[#283A2C] hover:bg-[#283A2C] hover:text-[#DADDC5]'
+                    }`;
+
+                    if (lockedTheme && themeHero) {
+                      return (
+                        <Link
+                          key={theme._id}
+                          to={`/tour-plans/${theme.slug}`}
+                          className={`${themeButtonClassName} max-w-[82vw] whitespace-normal break-words`}
+                        >
+                          {theme.title}
+                        </Link>
+                      );
+                    }
+
                     return (
-                      <Link
+                      <button
                         key={theme._id}
-                        to={`/tour-plans/${theme.slug}`}
+                        type="button"
+                        onClick={() => handleThemeSelect(theme)}
                         className={`${themeButtonClassName} max-w-[82vw] whitespace-normal break-words`}
                       >
                         {theme.title}
-                      </Link>
+                      </button>
                     );
-                  }
-
-                  return (
-                    <button
-                      key={theme._id}
-                      type="button"
-                      onClick={() => handleThemeSelect(theme)}
-                      className={`${themeButtonClassName} max-w-[82vw] whitespace-normal break-words`}
-                    >
-                      {theme.title}
-                    </button>
-                  );
-                })}
-              </div>
+                  })}
+                </div>
+              </>
             )}
 
             {showHeader && !themeHero && selectedTheme?.description && (
@@ -981,7 +1345,7 @@ export default function Itineraries({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.28 }}
-                  className="mx-auto mt-2 max-w-2xl break-words text-center text-sm leading-7 text-[#283A2C]/58 sm:text-base"
+                  className="mx-auto mt-1 max-w-2xl break-words px-2 text-center text-sm leading-6 text-[#283A2C]/58 sm:text-base sm:leading-7 md:mt-2 md:px-0"
                 >
                   {selectedTheme.description}
                 </motion.p>
@@ -1008,10 +1372,11 @@ export default function Itineraries({
                   className="order-2 min-w-0 max-w-full overflow-hidden xl:order-2"
                 >
                   {mapPanel}
+                  {!tourPlanDetail && mobileDetailsPanel}
                 </motion.div>
               </AnimatePresence>
               {!tourPlanDetail && (
-                <div className="order-3 min-w-0 max-w-full overflow-hidden">
+                <div className="order-3 hidden min-w-0 max-w-full overflow-hidden md:block">
                   {detailsPanel}
                 </div>
               )}

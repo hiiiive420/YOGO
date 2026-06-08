@@ -117,7 +117,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-transparent px-4 pt-4 text-[#F1EFEC] transition duration-300 sm:px-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-50 hidden bg-transparent px-4 pt-4 text-[#F1EFEC] transition duration-300 md:block md:px-6 lg:px-8">
       <nav
         className={[
           'mx-auto grid w-[min(92vw,78rem)] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-[#FFFFFF]/20 bg-[#283A2C]/62 px-4 shadow-[0_22px_70px_rgba(0,0,0,0.18)] backdrop-blur-[20px] transition-all duration-500 ease-out sm:px-5 xl:w-[78vw]',

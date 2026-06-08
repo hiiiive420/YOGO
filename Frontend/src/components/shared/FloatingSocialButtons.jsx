@@ -18,7 +18,7 @@ const socialButtons = [
 
 export default function FloatingSocialButtons() {
   return (
-    <div className="fixed bottom-5 right-4 z-40 flex flex-col gap-3 sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-[calc(12.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex flex-col gap-3 md:bottom-6 md:right-6">
       {socialButtons.map((item, index) => {
         const Icon = item.icon;
 

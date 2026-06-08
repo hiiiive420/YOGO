@@ -203,6 +203,48 @@ function getTopPackageSlotStyle(offset) {
   return slots[offset] || slots[0];
 }
 
+function getMobileTopPackageSlotStyle(offset) {
+  const slots = {
+    '-2': {
+      opacity: 0.3,
+      pointerEvents: 'none',
+      transform:
+        'translate(-50%, -50%) translateX(-76%) translateY(-22px) scale(0.7) rotate(-4deg)',
+      zIndex: 10,
+    },
+    '-1': {
+      opacity: 0.76,
+      pointerEvents: 'auto',
+      transform:
+        'translate(-50%, -50%) translateX(-43%) translateY(-8px) scale(0.84) rotate(-2deg)',
+      zIndex: 20,
+    },
+    0: {
+      opacity: 1,
+      pointerEvents: 'auto',
+      transform:
+        'translate(-50%, -50%) translateX(0) translateY(24px) scale(1) rotate(0deg)',
+      zIndex: 30,
+    },
+    1: {
+      opacity: 0.76,
+      pointerEvents: 'auto',
+      transform:
+        'translate(-50%, -50%) translateX(43%) translateY(-8px) scale(0.84) rotate(2deg)',
+      zIndex: 20,
+    },
+    2: {
+      opacity: 0.3,
+      pointerEvents: 'none',
+      transform:
+        'translate(-50%, -50%) translateX(76%) translateY(-22px) scale(0.7) rotate(4deg)',
+      zIndex: 10,
+    },
+  };
+
+  return slots[offset] || slots[0];
+}
+
 function getTopPackageOffsets(length) {
   if (length >= 5) return [-2, -1, 0, 1, 2];
   if (length === 4) return [-1, 0, 1, 2];
@@ -260,6 +302,162 @@ function AnimatedLocationTitle({ name }) {
   );
 }
 
+function MobileHomeHero({
+  activeSlideIndex,
+  heroSlides,
+  onNext,
+  onPrevious,
+  onSelect,
+}) {
+  const activeSlide = heroSlides[activeSlideIndex % heroSlides.length];
+  const previousSlide =
+    heroSlides[(activeSlideIndex - 1 + heroSlides.length) % heroSlides.length];
+  const nextSlide = heroSlides[(activeSlideIndex + 1) % heroSlides.length];
+
+  function handleDragEnd(_, info) {
+    if (info.offset.x < -55 || info.velocity.x < -450) {
+      onNext();
+      return;
+    }
+
+    if (info.offset.x > 55 || info.velocity.x > 450) {
+      onPrevious();
+    }
+  }
+
+  return (
+    <section className="relative min-h-[100svh] overflow-hidden bg-[#F1EFEC] pb-10 pt-[6.4rem] text-[#FFFFFF] md:hidden">
+      <div className="relative mx-auto flex w-full max-w-[25rem] flex-col items-center">
+        <div className="relative h-[calc(100svh-9.25rem)] min-h-[32rem] max-h-[39rem] w-full">
+          {heroSlides.length > 1 && (
+            <>
+              <div className="pointer-events-none absolute inset-y-3 left-[3%] w-[88%] overflow-hidden rounded-lg border border-[#FFFFFF]/70 bg-[#283A2C] opacity-55 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
+                {previousSlide.image ? (
+                  <img
+                    src={previousSlide.image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <PlaceholderVisual label={previousSlide.name} />
+                )}
+                <div className="absolute inset-0 bg-black/50" />
+              </div>
+
+              <div className="pointer-events-none absolute inset-y-3 right-[3%] w-[88%] overflow-hidden rounded-lg border border-[#FFFFFF]/70 bg-[#283A2C] opacity-55 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
+                {nextSlide.image ? (
+                  <img
+                    src={nextSlide.image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <PlaceholderVisual label={nextSlide.name} />
+                )}
+                <div className="absolute inset-0 bg-black/50" />
+              </div>
+            </>
+          )}
+
+          <AnimatePresence initial={false} mode="wait">
+            <motion.article
+              key={activeSlide._id}
+              drag={heroSlides.length > 1 ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.16}
+              onDragEnd={handleDragEnd}
+              initial={{ opacity: 0, scale: 0.96, x: 36 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.96, x: -36 }}
+              transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-y-0 left-[6%] z-20 w-[88%] cursor-grab touch-pan-y overflow-hidden rounded-lg border border-[#FFFFFF]/20 bg-[#283A2C] shadow-[0_28px_70px_rgba(40,58,44,0.30)] active:cursor-grabbing"
+            >
+              {activeSlide.image ? (
+                <motion.img
+                  src={activeSlide.image}
+                  alt={activeSlide.name}
+                  initial={{ scale: 1.06 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <PlaceholderVisual label={activeSlide.name} />
+              )}
+
+              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/62" />
+
+              <div className="relative flex h-full flex-col px-5 pb-5 pt-14">
+                <div className="max-w-[88%]">
+                  <p className="text-[0.58rem] font-black uppercase tracking-[0.28em] text-[#DADDC5]">
+                    YOGO Destination
+                  </p>
+                  <h1 className="mt-3 break-words font-display text-[2.35rem] font-semibold leading-[0.98] text-[#FFFFFF]">
+                    {activeSlide.name}
+                  </h1>
+                  <p className="mt-4 line-clamp-5 text-pretty text-xs leading-5 text-[#FFFFFF]/88">
+                    {activeSlide.description}
+                  </p>
+                </div>
+
+                <Link
+                  to="/travel-themes"
+                  className="mt-auto inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#F1EFEC] px-5 text-center text-xs font-black uppercase tracking-[0.12em] text-[#283A2C] shadow-[0_12px_28px_rgba(0,0,0,0.30)] transition duration-300 active:scale-[0.98] active:bg-[#DADDC5]"
+                >
+                  Explore Our Packages
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </motion.article>
+          </AnimatePresence>
+
+          {heroSlides.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous destination"
+                onClick={onPrevious}
+                className="absolute left-0 top-1/2 z-30 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#FFFFFF]/22 bg-[#283A2C]/88 text-[#F1EFEC] shadow-[0_10px_24px_rgba(0,0,0,0.24)] backdrop-blur-md active:scale-95"
+              >
+                <ChevronLeft size={21} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next destination"
+                onClick={onNext}
+                className="absolute right-0 top-1/2 z-30 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#FFFFFF]/22 bg-[#283A2C]/88 text-[#F1EFEC] shadow-[0_10px_24px_rgba(0,0,0,0.24)] backdrop-blur-md active:scale-95"
+              >
+                <ChevronRight size={21} />
+              </button>
+            </>
+          )}
+        </div>
+
+        <div
+          className="mt-3 flex min-h-5 items-center justify-center gap-2"
+          aria-label="Destination slides"
+        >
+          {heroSlides.map((slide, index) => (
+            <button
+              key={slide._id}
+              type="button"
+              onClick={() => onSelect(index)}
+              aria-label={`Show ${slide.name}`}
+              aria-current={index === activeSlideIndex ? 'true' : undefined}
+              className={`h-2 rounded-full border border-[#283A2C] transition-all duration-300 ${
+                index === activeSlideIndex
+                  ? 'w-7 bg-[#283A2C]'
+                  : 'w-2 bg-[#DADDC5]'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function HomeTravelThemesSection() {
   return (
     <div id="interactive-travel-themes" className="scroll-mt-28">
@@ -272,6 +470,8 @@ function DiscoverSriLankaRouteSection() {
   const [hoveredStop, setHoveredStop] = useState(null);
   const routePath =
     'M -130 64 C 170 218 440 248 622 238 C 815 228 1018 176 1330 50';
+  const mobileRoutePath =
+    'M -130 135 C 170 192 440 209 622 205 C 815 201 1018 181 1330 128';
   const planePath =
     'M20 6C22 6 24 8 24 10C24 12 22 13.2 20 12.6L13.5 10L8.5 18.5H6L9.8 10L3.5 11L2 14H0L1 10L0 6H2L3.5 9L9.8 10L6 1.5H8.5L13.5 10Z';
 
@@ -420,49 +620,120 @@ function DiscoverSriLankaRouteSection() {
           })}
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-md md:hidden">
-          <motion.div
-            className="absolute bottom-12 left-[2.05rem] top-12 w-px origin-top bg-[#DADDC5]"
-            initial={{ scaleY: 0 }}
-            whileInView={{ scaleY: 1 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 1.05, ease: 'easeInOut' }}
-          />
-          <div className="grid gap-6">
-            {discoveryRouteStops.map((stop, index) => (
-              <motion.div
+        <div className="relative mx-auto mt-2 h-[18rem] w-full overflow-visible md:hidden">
+          <svg
+            className="absolute inset-0 h-full w-full overflow-visible"
+            viewBox="0 0 1200 340"
+            fill="none"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d={mobileRoutePath}
+              stroke="#DADDC5"
+              strokeDasharray="6 10"
+              strokeLinecap="round"
+              strokeOpacity="0.38"
+              strokeWidth="2"
+            />
+            <motion.path
+              d={mobileRoutePath}
+              stroke="#DADDC5"
+              strokeDasharray="6 10"
+              strokeLinecap="round"
+              strokeOpacity="0.82"
+              strokeWidth="2.2"
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 1.45, ease: 'easeInOut' }}
+            />
+
+            <g opacity="0.9">
+              <path
+                d={planePath}
+                fill="#F1EFEC"
+                transform="translate(-12 -10) scale(1.15)"
+              />
+              <animateMotion
+                dur="9s"
+                path={mobileRoutePath}
+                repeatCount="indefinite"
+                rotate="auto"
+              />
+            </g>
+            <g opacity="0.48">
+              <path
+                d={planePath}
+                fill="#F1EFEC"
+                transform="translate(-12 -10) scale(0.9)"
+              />
+              <animateMotion
+                begin="3s"
+                dur="9s"
+                path={mobileRoutePath}
+                repeatCount="indefinite"
+                rotate="auto"
+              />
+            </g>
+          </svg>
+
+          {discoveryRouteStops.map((stop, index) => {
+            const isHovered = hoveredStop === index;
+            const mobileSize = Math.round(stop.desktop.size * 0.56);
+            const mobileTop = 43 + (stop.desktop.top - 44) * 0.42;
+
+            return (
+              <div
                 key={stop.name}
-                initial={{ opacity: 0, x: 24 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{
-                  delay: index * 0.08,
-                  duration: 0.5,
-                  ease: [0.22, 1, 0.36, 1],
+                className="absolute z-10"
+                style={{
+                  left: `${stop.desktop.left}%`,
+                  top: `${mobileTop}%`,
+                  transform: 'translate(-50%, -50%)',
                 }}
-                className="relative flex items-center gap-4"
               >
-                <div className="relative z-10 h-16 w-16 shrink-0 overflow-hidden rounded-full border-[1.5px] border-[#283A2C] bg-[#DADDC5] text-[#283A2C] shadow-[0_14px_34px_rgba(0,0,0,0.22)]">
-                  <img
-                    src={stop.image}
-                    alt={stop.name}
-                    className="h-full w-full object-cover grayscale"
-                  />
-                </div>
-                <div className="min-w-0 rounded-lg border border-[#FFFFFF]/10 bg-[#FFFFFF]/8 px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.14)]">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#DADDC5]">
-                    {stop.region}
-                  </p>
-                  <p className="mt-1 font-display text-2xl font-semibold text-[#FFFFFF]">
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, y: 14, scale: 0.88 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{
+                    delay: 0.12 + index * 0.07,
+                    duration: 0.5,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  onClick={() =>
+                    setHoveredStop((current) => (current === index ? null : index))
+                  }
+                  className="flex flex-col items-center text-center"
+                >
+                  <span className="mb-2 h-2 w-2 rounded-full border border-[#283A2C] bg-[#DADDC5] shadow-[0_0_0_6px_rgba(218,221,197,0.12)]" />
+                  <motion.span
+                    animate={{ scale: isHovered ? 1.08 : 1 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="block overflow-hidden rounded-full border-[1.5px] border-[#283A2C] bg-[#DADDC5] p-1 shadow-[0_14px_32px_rgba(0,0,0,0.28)]"
+                    style={{ height: mobileSize, width: mobileSize }}
+                  >
+                    <img
+                      src={stop.image}
+                      alt={stop.name}
+                      className="h-full w-full rounded-full object-cover"
+                      style={{
+                        filter: isHovered
+                          ? 'grayscale(0%) contrast(1.03)'
+                          : 'grayscale(100%) contrast(1.08)',
+                        transition: 'filter 0.4s ease',
+                      }}
+                    />
+                  </motion.span>
+                  <span className="mt-2 whitespace-nowrap text-[0.64rem] font-bold leading-none text-[#FFFFFF]">
                     {stop.name}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#F1EFEC]/66">
-                    {stop.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  </span>
+                </motion.button>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -556,23 +827,35 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
     setActiveIndex((current) => (current + 1) % locations.length);
   }
 
+  function handleMobileLocationDragEnd(_, info) {
+    if (info.offset.x < -55 || info.velocity.x < -450) {
+      goToNextLocation();
+      return;
+    }
+
+    if (info.offset.x > 55 || info.velocity.x > 450) {
+      goToPreviousLocation();
+    }
+  }
+
   return (
-    <section className="relative overflow-hidden bg-[#283A2C] px-4 py-14 text-[#FFFFFF] sm:px-6 sm:py-16 lg:px-8 lg:py-[4.5rem]">
+    <section className="relative overflow-hidden bg-[#283A2C] px-4 pb-[5.5rem] pt-[4.5rem] text-[#FFFFFF] sm:px-6 sm:py-16 lg:px-8 lg:py-[4.5rem]">
       <div className="mx-auto grid max-w-[92rem] gap-8 lg:min-h-[34rem] lg:grid-cols-[minmax(15rem,0.28fr)_minmax(0,0.72fr)] lg:items-center lg:gap-10">
         <div className="lg:self-start lg:pt-4">
-          <div className="max-w-sm">
+          <div className="max-w-[20rem] sm:max-w-sm">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-[#DADDC5]">
               Popularly
             </p>
-            <h2 className="mt-3 font-display text-4xl font-semibold leading-[0.98] text-[#F1EFEC] sm:text-5xl lg:text-[3.45rem]">
-              Most Popular Sri Lankan
+            <h2 className="mt-3 font-display text-[2.65rem] font-semibold leading-[0.98] text-[#F1EFEC] sm:text-5xl lg:text-[3.45rem]">
+              <span className="block sm:inline">Most Popular</span>{' '}
+              <span className="block sm:inline">Sri Lankan</span>
               <span className="block">Destinations</span>
             </h2>
           </div>
         </div>
 
         <div className="min-w-0">
-          <div className="mb-7 flex items-center justify-between gap-4 sm:justify-end">
+          <div className="mb-8 flex items-center justify-end gap-5 sm:mb-7">
             {locations.length > 0 && (
               <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-[#F1EFEC]/72">
                 <span className="text-[#DADDC5]">
@@ -604,8 +887,99 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
             </div>
           </div>
 
+          <motion.div
+            drag={locations.length > 1 ? 'x' : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.14}
+            onDragEnd={handleMobileLocationDragEnd}
+            className="relative h-[26rem] cursor-grab touch-pan-y overflow-visible active:cursor-grabbing md:hidden"
+            onPointerEnter={() => setIsCarouselPaused(true)}
+            onPointerLeave={() => setIsCarouselPaused(false)}
+          >
+            {status === 'loading' && (
+              <>
+                <div className="absolute left-[-48vw] top-8 h-[21rem] w-[62vw] animate-pulse rounded-lg bg-[#DADDC5]/12" />
+                <div className="absolute left-[6vw] top-0 h-[25rem] w-[80vw] animate-pulse rounded-lg bg-[#DADDC5]/20" />
+                <div className="absolute right-[-48vw] top-8 h-[21rem] w-[62vw] animate-pulse rounded-lg bg-[#DADDC5]/12" />
+              </>
+            )}
+
+            {status !== 'loading' &&
+              visibleLocations.map(({ index, isActive, location, position }) => (
+                <motion.button
+                  key={location._id || index}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  initial={{
+                    opacity: 0,
+                    scale: isActive ? 0.96 : 0.86,
+                    y: 18,
+                  }}
+                  animate={{
+                    opacity: isActive ? 1 : 0.52,
+                    scale: isActive ? 1 : 0.9,
+                    y: isActive ? 0 : 24,
+                  }}
+                  exit={{ opacity: 0, scale: 0.88, y: 18 }}
+                  transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
+                  className={`absolute top-0 overflow-hidden rounded-lg border-[1.5px] border-[#283A2C] bg-[#DADDC5] text-left text-[#283A2C] shadow-[0_24px_70px_rgba(0,0,0,0.28)] ${
+                    isActive
+                      ? 'left-[6vw] z-20 h-[25rem] w-[80vw]'
+                      : position === 'previous'
+                        ? 'left-[-48vw] z-10 h-[21rem] w-[62vw]'
+                        : 'right-[-48vw] z-10 h-[21rem] w-[62vw]'
+                  }`}
+                >
+                  {location.image ? (
+                    <motion.img
+                      src={location.image}
+                      alt={location.name}
+                      animate={{ scale: isActive ? 1.045 : 1.01 }}
+                      transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <PlaceholderVisual label={location.name} />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#283A2C]/92 via-[#283A2C]/16 to-transparent" />
+                  <div
+                    className={`absolute inset-x-0 bottom-0 ${
+                      isActive ? 'p-4' : 'p-3'
+                    }`}
+                  >
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[#F1EFEC]/92 px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[#283A2C]">
+                      <MapPin size={13} />
+                      Top Location
+                    </div>
+                    <h3
+                      className={`mt-3 line-clamp-2 break-words font-display font-semibold text-[#FFFFFF] ${
+                        isActive
+                          ? 'text-[2rem] leading-none'
+                          : 'text-2xl leading-tight'
+                      }`}
+                    >
+                      {location.name}
+                    </h3>
+                    <p
+                      className={`mt-2 break-words text-[0.78rem] leading-5 text-[#F1EFEC]/78 ${
+                        isActive ? 'line-clamp-2' : 'line-clamp-1'
+                      }`}
+                    >
+                      {getLocationDescription(location)}
+                    </p>
+                    {isActive && (
+                      <span className="mt-4 inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#DADDC5]">
+                        Discover More
+                        <ArrowRight size={15} />
+                      </span>
+                    )}
+                  </div>
+                </motion.button>
+              ))}
+          </motion.div>
+
           <div
-            className="relative h-[22rem] overflow-hidden sm:h-[25rem] lg:h-[28rem] xl:h-[29rem]"
+            className="relative hidden h-[25rem] overflow-hidden md:block lg:h-[28rem] xl:h-[29rem]"
             onPointerEnter={() => setIsCarouselPaused(true)}
             onPointerLeave={() => setIsCarouselPaused(false)}
           >
@@ -747,7 +1121,6 @@ function TopPackagesSection({ packages = [], status = 'idle' }) {
     setActiveIndex((current) => (current + 1) % length);
   }
 
-  const activePackage = packages[activeIndex] || {};
   const offsets = getTopPackageOffsets(length);
 
   return (
@@ -927,59 +1300,106 @@ function TopPackagesSection({ packages = [], status = 'idle' }) {
                 })}
               </div>
 
-              <div className="mx-auto max-w-sm md:hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activePackage._id || activePackage.slug}
-                    initial={{ opacity: 0, x: 28 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -28 }}
-                    transition={{ duration: 0.42, ease: 'easeInOut' }}
-                    className="relative h-[27rem] overflow-hidden rounded-[2rem] border-[1.5px] border-[#283A2C] bg-[#DADDC5] text-[#283A2C] shadow-[0_24px_70px_rgba(0,0,0,0.34)]"
-                  >
-                    {getPackageImage(activePackage) ? (
-                      <img
-                        src={getPackageImage(activePackage)}
-                        alt={activePackage.title}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <PlaceholderVisual label={activePackage.title} />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#07160D] via-[#07160D]/56 to-transparent" />
-                    <div className="absolute left-5 top-5 rounded-full bg-black/44 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#DADDC5]">
-                      {getPackageThemeName(activePackage)}
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 p-6">
-                      <div className="mb-3 flex gap-1 text-[#DADDC5]">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className="h-3.5 w-3.5 fill-current stroke-none"
-                          />
-                        ))}
-                      </div>
-                      <h3 className="line-clamp-2 text-xl font-black uppercase leading-tight text-[#FFFFFF]">
-                        {activePackage.title}
-                      </h3>
-                      <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#F1EFEC]/72">
-                        {activePackage.shortDescription}
-                      </p>
-                      <div className="mt-5 flex items-center justify-between border-t border-[#FFFFFF]/10 pt-4">
-                        <span className="text-sm font-black text-[#FFFFFF]">
-                          {getPackageDuration(activePackage)}
-                        </span>
-                        <Link
-                          to={getPackageTourPlanHref(activePackage)}
-                          className="rounded-full border-[1.5px] border-[#283A2C] bg-[#DADDC5] px-5 py-2 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#283A2C] transition duration-300 ease-out hover:bg-[#283A2C] hover:text-[#DADDC5]"
-                        >
-                          View Tour
-                        </Link>
-                      </div>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+              <div className="mx-auto w-full max-w-[25rem] md:hidden">
+                <div className="relative h-[23rem] w-full">
+                  {offsets.map((offset) => {
+                    const targetIndex = (activeIndex + offset + length) % length;
+                    const pkg = packages[targetIndex];
+                    const isSelected = offset === 0;
+                    const routeLocations = getPackageLocations(pkg);
+                    const themeName = getPackageThemeName(pkg);
+                    const image = getPackageImage(pkg);
 
+                    return (
+                      <div
+                        key={pkg._id || pkg.slug || targetIndex}
+                        role="button"
+                        tabIndex={isSelected ? -1 : 0}
+                        onClick={() => {
+                          if (isSelected) return;
+                          setActiveIndex(targetIndex);
+                        }}
+                        onKeyDown={(event) => {
+                          if (isSelected) return;
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setActiveIndex(targetIndex);
+                          }
+                        }}
+                        className={`group absolute left-1/2 top-1/2 h-[20rem] w-[14.5rem] will-change-transform overflow-hidden rounded-[1.35rem] border text-left shadow-[0_24px_64px_rgba(0,0,0,0.38)] transition-[transform,opacity,filter,border-color,box-shadow] duration-[850ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                          isSelected
+                            ? 'border-[#DADDC5]/60 shadow-[0_32px_82px_rgba(0,0,0,0.48)] ring-4 ring-[#FFFFFF]/10'
+                            : 'border-[#FFFFFF]/10'
+                        }`}
+                        style={getMobileTopPackageSlotStyle(offset)}
+                      >
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={pkg.title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <PlaceholderVisual label={pkg.title} />
+                        )}
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#07160D] via-[#07160D]/62 to-[#283A2C]/10" />
+                        <div className="absolute left-3.5 top-3.5 rounded-full border border-[#FFFFFF]/10 bg-black/38 px-2 py-1 text-[0.5rem] font-black uppercase tracking-[0.12em] text-[#DADDC5] backdrop-blur-md">
+                          {themeName}
+                        </div>
+
+                        <div className="absolute inset-x-0 bottom-0 p-4 text-[#FFFFFF]">
+                          <div className="mb-2 flex gap-0.5 text-[#DADDC5]">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className="h-3 w-3 fill-current stroke-none"
+                              />
+                            ))}
+                          </div>
+
+                          <h3 className="line-clamp-2 text-base font-black uppercase leading-tight text-[#FFFFFF]">
+                            {pkg.title}
+                          </h3>
+
+                          <div className="mt-2.5 space-y-1.5 text-[0.62rem] font-semibold text-[#F1EFEC]/78">
+                            <div className="flex items-center gap-1.5">
+                              <CalendarDays className="h-3 w-3 text-[#DADDC5]" />
+                              <span>{getPackageDuration(pkg)}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="h-3 w-3 shrink-0 text-[#DADDC5]" />
+                              <span className="truncate">
+                                {routeLocations.length
+                                  ? routeLocations.slice(0, 2).join(' / ')
+                                  : themeName}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-3.5 flex items-center justify-between border-t border-[#FFFFFF]/10 pt-3">
+                            <span className="text-xs font-black text-[#FFFFFF]">
+                              {pkg.totalDays || 'Custom'} Days
+                            </span>
+                            {isSelected ? (
+                              <Link
+                                to={getPackageTourPlanHref(pkg)}
+                                onClick={(event) => event.stopPropagation()}
+                                className="rounded-full border-[1.5px] border-[#283A2C] bg-[#DADDC5] px-3 py-1.5 text-[0.5rem] font-black uppercase tracking-[0.1em] text-[#283A2C]"
+                              >
+                                View Tour
+                              </Link>
+                            ) : (
+                              <span className="text-[0.5rem] font-black uppercase tracking-[0.14em] text-[#DADDC5]/76">
+                                Select
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
                 <div className="mt-6 flex justify-center gap-2">
                   {packages.map((pkg, index) => (
                     <button
@@ -1127,7 +1547,15 @@ export default function Home() {
 
   return (
     <div className="overflow-hidden bg-obsidian">
-      <section className="relative min-h-screen overflow-hidden bg-[#283A2C] px-4 pb-12 pt-28 text-[#FFFFFF] sm:px-6 lg:px-8 lg:pb-14">
+      <MobileHomeHero
+        activeSlideIndex={activeSlideIndex}
+        heroSlides={heroSlides}
+        onNext={goToNextSlide}
+        onPrevious={goToPreviousSlide}
+        onSelect={setActiveSlideIndex}
+      />
+
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#283A2C] px-4 pb-12 pt-28 text-[#FFFFFF] md:block md:px-6 lg:px-8 lg:pb-14">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide._id}
