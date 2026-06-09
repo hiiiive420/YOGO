@@ -136,49 +136,63 @@ function MobileThemeDial({
   const frameRef = useRef(null);
   const scrollTimerRef = useRef(null);
 
-  const updateRailPositions = useCallback(() => {
+  const updateDialPositions = useCallback(() => {
     window.cancelAnimationFrame(frameRef.current);
     frameRef.current = window.requestAnimationFrame(() => {
       const rail = railRef.current;
       if (!rail) return;
 
-      const railBounds = rail.getBoundingClientRect();
+      const railCenter = rail.clientWidth / 2;
+      const arcRadius = rail.clientWidth / 2;
 
       themes.forEach((theme) => {
         const item = itemRefs.current.get(theme.slug);
         if (!item) return;
 
-        const itemBounds = item.getBoundingClientRect();
-        const itemCenter = itemBounds.left + itemBounds.width / 2;
-        const positionRatio = Math.min(
-          Math.max((itemCenter - railBounds.left) / railBounds.width, 0),
+        const itemCenter =
+          item.offsetLeft + item.offsetWidth / 2 - rail.scrollLeft;
+        const signedDistance = Math.min(
+          Math.max((itemCenter - railCenter) / arcRadius, -1),
           1,
         );
-        const curveDepth = Math.sin(positionRatio * Math.PI);
-        const y = 24 + curveDepth * 34;
+        const distance = Math.abs(signedDistance);
+        const y = (1 - distance * distance) * 28;
+        const rotation = signedDistance * -4;
 
-        item.style.transform = `translateY(${y}px)`;
+        item.style.transform = `translateY(${y}px) rotate(${rotation}deg)`;
       });
     });
   }, [themes]);
 
   useEffect(() => {
-    updateRailPositions();
-  }, [selectedThemeSlug, updateRailPositions]);
+    const rail = railRef.current;
+    const selectedItem = itemRefs.current.get(selectedThemeSlug);
+
+    if (rail && selectedItem) {
+      rail.scrollTo({
+        behavior: 'smooth',
+        left:
+          selectedItem.offsetLeft -
+          (rail.clientWidth - selectedItem.offsetWidth) / 2,
+      });
+    }
+
+    updateDialPositions();
+  }, [selectedThemeSlug, updateDialPositions]);
 
   useEffect(() => {
-    updateRailPositions();
-    window.addEventListener('resize', updateRailPositions);
+    updateDialPositions();
+    window.addEventListener('resize', updateDialPositions);
 
     return () => {
-      window.removeEventListener('resize', updateRailPositions);
+      window.removeEventListener('resize', updateDialPositions);
       window.cancelAnimationFrame(frameRef.current);
       window.clearTimeout(scrollTimerRef.current);
     };
-  }, [updateRailPositions]);
+  }, [updateDialPositions]);
 
   function handleRailScroll() {
-    updateRailPositions();
+    updateDialPositions();
     if (lockedTheme) return;
 
     window.clearTimeout(scrollTimerRef.current);
@@ -223,33 +237,37 @@ function MobileThemeDial({
         }}
         initial={false}
         transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-        className="flex flex-col items-center"
+        className="relative flex flex-col items-center"
       >
         <motion.span
-          animate={{ scale: isActive ? 1.1 : 0.85 }}
+          animate={{ scale: isActive ? 1 : 0.92 }}
           initial={false}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-          className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full border transition duration-300 ${
+          className={`relative z-10 grid place-items-center overflow-hidden rounded-full border transition duration-300 ${
             isActive
-              ? 'border-[#283A2C] bg-[#283A2C] text-[#F1EFEC] shadow-[0_8px_18px_rgba(40,58,44,0.22)]'
-              : 'border-transparent bg-transparent text-[#283A2C]'
+              ? 'h-12 w-12 border-[#283A2C] bg-[#283A2C] text-[#FFFFFF] shadow-[0_8px_20px_rgba(40,58,44,0.25)]'
+              : 'h-12 w-12 border-transparent bg-transparent text-[#283A2C]/60'
           }`}
         >
           {iconImage ? (
             <img
               src={iconImage}
               alt=""
-              className={`h-full w-full object-cover transition duration-300 ${
-                isActive ? 'scale-110 brightness-110' : 'grayscale'
+              className={`h-full w-full object-contain transition duration-300 ${
+                isActive
+                  ? 'p-3 brightness-0 invert'
+                  : 'p-1 grayscale opacity-60'
               }`}
             />
           ) : (
-            <Icon size={isActive ? 23 : 26} strokeWidth={isActive ? 2 : 2.25} />
+            <Icon size={isActive ? 30 : 28} strokeWidth={isActive ? 2 : 2.2} />
           )}
         </motion.span>
         <span
-          className={`mt-1 line-clamp-2 min-h-[1.25rem] max-w-[4.25rem] text-center text-[0.54rem] font-black uppercase leading-[1.15] tracking-[0.04em] transition ${
-            isActive ? 'text-[#283A2C]' : 'text-[#283A2C]/72'
+          className={`relative z-10 line-clamp-2 min-h-[1.15rem] max-w-[4.5rem] text-center text-[0.5625rem] font-bold uppercase leading-[1.05] tracking-[0.055em] transition ${
+            isActive
+              ? 'mt-0 text-[#283A2C]'
+              : 'mt-0 text-[#283A2C]/65'
           }`}
         >
           {theme.title}
@@ -259,51 +277,79 @@ function MobileThemeDial({
   }
 
   return (
-    <div className="mt-5 md:hidden">
+    <div className="mt-1 md:hidden">
       <div className="text-center">
-        <h2 className="text-xl font-black leading-none text-[#283A2C]">
+        <h2 className="text-xl font-bold leading-none text-[#283A2C]">
           Select Your Package
         </h2>
-        <span className="mx-auto mt-1.5 block h-0.5 w-20 bg-[#283A2C]" />
+        <span className="mx-auto mt-1 block h-0.5 w-16 bg-[#283A2C]" />
       </div>
 
-      <div className="relative -mx-4 mt-2 h-[8.75rem] w-[calc(100%+2rem)] overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-[-8%] top-0 h-full">
+      <div className="relative left-1/2 -mt-1 h-[6.75rem] w-screen -translate-x-1/2 overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-full">
           <svg
             aria-hidden="true"
             className="h-full w-full"
             fill="none"
             preserveAspectRatio="none"
-            viewBox="0 0 420 140"
+            viewBox="0 0 420 108"
           >
             <path
-              d="M-20 20 C88 52 332 52 440 20"
+              d="M-70 -34 Q210 78 490 -34"
               stroke="#283A2C"
+              strokeWidth="2.25"
+            />
+            <path
+              d="M-70 -30 Q210 82 490 -30"
+              stroke="#283A2C"
+              strokeOpacity="0.58"
+              strokeWidth="1.25"
+            />
+            <path
+              d="M-70 40 Q210 152 490 40"
+              stroke="#283A2C"
+              strokeOpacity="0.58"
+              strokeWidth="1.25"
+            />
+            <path
+              d="M-70 44 Q210 156 490 44"
+              stroke="#283A2C"
+              strokeOpacity="0.86"
+              strokeWidth="2.25"
+            />
+            <path
+              d="M203 18 L217 18 L210 30 Z"
+              fill="#283A2C"
+              stroke="#F1EFEC"
+              strokeLinejoin="round"
               strokeWidth="1.5"
             />
             <path
-              d="M-20 92 C88 138 332 138 440 92"
-              stroke="#283A2C"
-              strokeOpacity="0.72"
+              d="M203 104 L217 104 L210 92 Z"
+              fill="#283A2C"
+              stroke="#F1EFEC"
+              strokeLinejoin="round"
               strokeWidth="1.5"
             />
           </svg>
         </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-[2.65rem] z-20 -translate-x-1/2">
-          <span className="mx-auto block h-2.5 w-0.5 bg-[#283A2C]" />
-          <span className="block h-1.5 w-1.5 rounded-full bg-[#283A2C]" />
+        <div className="pointer-events-none absolute -left-4 top-[3.4rem] z-20 text-[#283A2C]/40">
+          <Leaf size={30} strokeWidth={1.8} />
+        </div>
+        <div className="pointer-events-none absolute -right-4 top-[3.4rem] z-20 text-[#283A2C]/40">
+          <Gem size={30} strokeWidth={1.8} />
         </div>
 
         <div
           ref={railRef}
           onScroll={handleRailScroll}
-          className="absolute inset-0 z-10 flex snap-x snap-mandatory gap-2 overflow-x-auto px-[calc(50%-2.125rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="absolute inset-x-0 bottom-1 top-0 z-10 flex touch-pan-x snap-x snap-mandatory items-start gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain px-[calc(50%-2.25rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {themes.map((theme) => {
             const isActive = theme.slug === selectedThemeSlug;
             const sharedClassName =
-              'flex w-[4.25rem] flex-col items-center transition duration-300';
+              'flex w-[4.5rem] flex-col items-center transition duration-300';
             const setItemRef = (node) => {
               if (node) {
                 itemRefs.current.set(theme.slug, node);
@@ -317,7 +363,7 @@ function MobileThemeDial({
                 <div
                   key={theme._id}
                   ref={setItemRef}
-                  className="w-[4.25rem] shrink-0 snap-center transition-transform duration-150 ease-out"
+                  className="w-[4.5rem] shrink-0 snap-center transition-transform duration-150 ease-out"
                 >
                   <Link
                     to={`/tour-plans/${theme.slug}`}
@@ -333,7 +379,7 @@ function MobileThemeDial({
               <div
                 key={theme._id}
                 ref={setItemRef}
-                className="w-[4.25rem] shrink-0 snap-center transition-transform duration-150 ease-out"
+                className="w-[4.5rem] shrink-0 snap-center transition-transform duration-150 ease-out"
               >
                 <button
                   type="button"
@@ -388,6 +434,44 @@ function EmptyPanel({ icon: Icon = Route, title, message }) {
   );
 }
 
+function MobilePackagePills({
+  itineraries,
+  onSelect,
+  selectedItinerary,
+  status,
+}) {
+  if (itineraries.length === 0 && status !== 'loading') return null;
+
+  return (
+    <div className="mt-2.5 flex w-full snap-x snap-mandatory items-center gap-2.5 overflow-x-auto px-1.5 pb-1.5 scroll-px-1.5 md:hidden [scrollbar-width:none] [&>*:last-child]:mr-1.5 [&::-webkit-scrollbar]:hidden">
+      {status === 'loading' && (
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#283A2C]/20 bg-[#FFFFFF]">
+          <Loader2 className="animate-spin text-[#283A2C]" size={16} />
+        </span>
+      )}
+
+      {itineraries.map((itinerary) => {
+        const isActive = selectedItinerary?._id === itinerary._id;
+
+        return (
+          <button
+            key={itinerary._id}
+            type="button"
+            onClick={() => onSelect(itinerary._id)}
+            className={`min-w-[6.5rem] max-w-[72vw] shrink-0 snap-start rounded-full border px-3.5 py-2 text-[0.68rem] font-bold transition duration-300 ${
+              isActive
+                ? 'border-[#283A2C] bg-[#283A2C] text-[#FFFFFF] shadow-[0_8px_22px_rgba(40,58,44,0.28)]'
+                : 'border-[#283A2C]/45 bg-[#FFFFFF] text-[#283A2C] shadow-[0_4px_12px_rgba(40,58,44,0.06)]'
+            }`}
+          >
+            <span className="line-clamp-1 break-words">{itinerary.title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function ItineraryListPanel({
   itineraries,
   onSelect,
@@ -428,29 +512,6 @@ function ItineraryListPanel({
                 : 'Activity Packages are not published yet.'
             }
           />
-        </div>
-      )}
-
-      {itineraries.length > 0 && (
-        <div className="flex w-full gap-2 overflow-x-auto px-1 pb-2 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {itineraries.map((itinerary) => {
-            const isActive = selectedItinerary?._id === itinerary._id;
-
-            return (
-              <button
-                key={itinerary._id}
-                type="button"
-                onClick={() => onSelect(itinerary._id)}
-                className={`max-w-[72vw] shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-black transition duration-300 ${
-                  isActive
-                    ? 'border-[#283A2C] bg-[#283A2C] text-[#F1EFEC] shadow-[0_8px_18px_rgba(40,58,44,0.16)]'
-                    : 'border-[#283A2C]/28 bg-[#FFFFFF] text-[#283A2C]'
-                }`}
-              >
-                <span className="line-clamp-1 break-words">{itinerary.title}</span>
-              </button>
-            );
-          })}
         </div>
       )}
 
@@ -1239,19 +1300,19 @@ export default function Itineraries({
               Custom Curations
             </p>
             <h1
-              className={`mt-3 text-4xl font-black uppercase leading-tight tracking-tight sm:text-5xl ${
+              className={`mt-2 text-4xl font-black uppercase leading-[1.05] tracking-tight sm:mt-3 sm:text-5xl sm:leading-tight ${
                 themeHero ? 'text-[#FFFFFF]' : 'text-[#283A2C]'
               }`}
             >
               Interactive Travel Themes
             </h1>
             <div
-              className={`mx-auto mt-4 h-px w-12 ${
+              className={`mx-auto mt-3 h-px w-12 sm:mt-4 ${
                 themeHero ? 'bg-[#DADDC5]' : 'bg-[#283A2C]'
               }`}
             />
             <p
-              className={`mx-auto mt-4 max-w-2xl text-pretty text-sm leading-7 sm:text-base ${
+              className={`mx-auto mt-3 max-w-2xl text-pretty text-sm leading-6 sm:mt-4 sm:text-base sm:leading-7 ${
                 themeHero ? 'text-[#F1EFEC]/84' : 'text-[#283A2C]/62'
               }`}
             >
@@ -1301,6 +1362,13 @@ export default function Itineraries({
                   themes={themes}
                 />
 
+                <MobilePackagePills
+                  itineraries={itineraries}
+                  onSelect={setSelectedItineraryId}
+                  selectedItinerary={selectedItinerary}
+                  status={itinerariesStatus}
+                />
+
                 <div className="mt-9 hidden w-full max-w-full gap-3 pb-3 md:flex md:flex-wrap md:justify-center md:overflow-visible">
                   {themes.map((theme) => {
                     const isActive = theme.slug === selectedThemeSlug;
@@ -1345,7 +1413,7 @@ export default function Itineraries({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.28 }}
-                  className="mx-auto mt-1 max-w-2xl break-words px-2 text-center text-sm leading-6 text-[#283A2C]/58 sm:text-base sm:leading-7 md:mt-2 md:px-0"
+                  className="mx-auto mt-1 hidden max-w-2xl break-words px-2 text-center text-sm leading-6 text-[#283A2C]/58 sm:text-base sm:leading-7 md:mt-2 md:block md:px-0"
                 >
                   {selectedTheme.description}
                 </motion.p>
@@ -1353,13 +1421,17 @@ export default function Itineraries({
             )}
 
             <div
-              className={`mt-10 grid w-full max-w-full min-w-0 grid-cols-1 gap-5 overflow-hidden md:gap-6 xl:items-start xl:justify-center xl:overflow-visible ${
+              className={`mt-2.5 grid w-full max-w-full min-w-0 grid-cols-1 gap-5 overflow-hidden md:mt-10 md:gap-6 xl:items-start xl:justify-center xl:overflow-visible ${
                 tourPlanDetail
                   ? 'xl:grid-cols-[minmax(15.5rem,18rem)_minmax(0,42rem)]'
                   : 'xl:grid-cols-[15.5rem_minmax(0,26rem)_21rem]'
               }`}
             >
-              <div className="order-1 min-w-0 max-w-full overflow-hidden xl:order-1">
+              <div
+                className={`order-1 min-w-0 max-w-full overflow-hidden xl:order-1 ${
+                  itineraries.length > 0 ? 'hidden md:block' : ''
+                }`}
+              >
                 {listPanel}
               </div>
               <AnimatePresence mode="wait">

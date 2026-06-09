@@ -326,12 +326,12 @@ function MobileHomeHero({
   }
 
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-[#F1EFEC] pb-10 pt-[6.4rem] text-[#FFFFFF] md:hidden">
+    <section className="relative overflow-hidden bg-[#F1EFEC] pb-3 pt-[calc(5.25rem-2.25rem)] text-[#FFFFFF] md:hidden">
       <div className="relative mx-auto flex w-full max-w-[25rem] flex-col items-center">
-        <div className="relative h-[calc(100svh-9.25rem)] min-h-[32rem] max-h-[39rem] w-full">
+        <div className="relative h-[clamp(32.5rem,calc(100svh-6.25rem),36.25rem)] w-full">
           {heroSlides.length > 1 && (
             <>
-              <div className="pointer-events-none absolute inset-y-3 left-[3%] w-[88%] overflow-hidden rounded-lg border border-[#FFFFFF]/70 bg-[#283A2C] opacity-55 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
+              <div className="pointer-events-none absolute inset-y-0 left-[calc(6%-0.75rem)] w-[88%] overflow-hidden rounded-[6px] border border-[#FFFFFF]/55 bg-[#283A2C] opacity-50 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
                 {previousSlide.image ? (
                   <img
                     src={previousSlide.image}
@@ -344,7 +344,7 @@ function MobileHomeHero({
                 <div className="absolute inset-0 bg-black/50" />
               </div>
 
-              <div className="pointer-events-none absolute inset-y-3 right-[3%] w-[88%] overflow-hidden rounded-lg border border-[#FFFFFF]/70 bg-[#283A2C] opacity-55 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
+              <div className="pointer-events-none absolute inset-y-0 right-[calc(6%-0.75rem)] w-[88%] overflow-hidden rounded-[6px] border border-[#FFFFFF]/55 bg-[#283A2C] opacity-50 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
                 {nextSlide.image ? (
                   <img
                     src={nextSlide.image}
@@ -359,99 +359,71 @@ function MobileHomeHero({
             </>
           )}
 
-          <AnimatePresence initial={false} mode="wait">
-            <motion.article
-              key={activeSlide._id}
-              drag={heroSlides.length > 1 ? 'x' : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.16}
-              onDragEnd={handleDragEnd}
-              initial={{ opacity: 0, scale: 0.96, x: 36 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.96, x: -36 }}
-              transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-y-0 left-[6%] z-20 w-[88%] cursor-grab touch-pan-y overflow-hidden rounded-lg border border-[#FFFFFF]/20 bg-[#283A2C] shadow-[0_28px_70px_rgba(40,58,44,0.30)] active:cursor-grabbing"
-            >
-              {activeSlide.image ? (
-                <motion.img
-                  src={activeSlide.image}
-                  alt={activeSlide.name}
-                  initial={{ scale: 1.06 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <PlaceholderVisual label={activeSlide.name} />
-              )}
+          <motion.article
+            drag={heroSlides.length > 1 ? 'x' : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.16}
+            onDragEnd={handleDragEnd}
+            className="absolute inset-y-0 left-[6%] z-20 w-[88%] cursor-grab touch-pan-y overflow-hidden rounded-[6px] border border-[#FFFFFF]/20 bg-[#283A2C] shadow-[0_28px_70px_rgba(40,58,44,0.30)] active:cursor-grabbing"
+          >
+            {activeSlide.image ? (
+              <img
+                src={activeSlide.image}
+                alt={activeSlide.name}
+                className="absolute inset-0 h-full w-full object-cover opacity-100"
+              />
+            ) : (
+              <PlaceholderVisual label={activeSlide.name} />
+            )}
 
-              <div className="absolute inset-0 bg-black/50" />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/62" />
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/62" />
 
-              <div className="relative flex h-full flex-col px-5 pb-5 pt-14">
-                <div className="max-w-[88%]">
-                  <p className="text-[0.58rem] font-black uppercase tracking-[0.28em] text-[#DADDC5]">
-                    YOGO Destination
-                  </p>
-                  <h1 className="mt-3 break-words font-display text-[2.35rem] font-semibold leading-[0.98] text-[#FFFFFF]">
-                    {activeSlide.name}
-                  </h1>
-                  <p className="mt-4 line-clamp-5 text-pretty text-xs leading-5 text-[#FFFFFF]/88">
-                    {activeSlide.description}
-                  </p>
-                </div>
+            <div className="relative flex h-full flex-col px-5 pb-[3.25rem] pt-12">
+              <div className="max-w-[88%]">
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.28em] text-[#DADDC5]">
 
-                <Link
-                  to="/travel-themes"
-                  className="mt-auto inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#F1EFEC] px-5 text-center text-xs font-black uppercase tracking-[0.12em] text-[#283A2C] shadow-[0_12px_28px_rgba(0,0,0,0.30)] transition duration-300 active:scale-[0.98] active:bg-[#DADDC5]"
-                >
-                  Explore Our Packages
-                  <ArrowRight size={16} />
-                </Link>
+                </p>
+                <h1 className="mt-3 break-words font-display text-[2.35rem] font-semibold leading-[0.98] text-[#FFFFFF]">
+                  {activeSlide.name}
+                </h1>
+                <p className="mt-4 line-clamp-5 text-pretty text-xs leading-5 text-[#FFFFFF]/88">
+                  {activeSlide.description}
+                </p>
               </div>
-            </motion.article>
-          </AnimatePresence>
 
-          {heroSlides.length > 1 && (
-            <>
-              <button
-                type="button"
-                aria-label="Previous destination"
-                onClick={onPrevious}
-                className="absolute left-0 top-1/2 z-30 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#FFFFFF]/22 bg-[#283A2C]/88 text-[#F1EFEC] shadow-[0_10px_24px_rgba(0,0,0,0.24)] backdrop-blur-md active:scale-95"
+              <Link
+                to="/travel-themes"
+                className="mx-auto mt-auto inline-flex w-auto max-w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#F1EFEC] px-6 py-3.5 text-center text-[0.65rem] font-bold tracking-[0.02em] text-[#283A2C] shadow-[0_0_18px_rgba(218,221,197,0.65),0_8px_24px_rgba(40,58,44,0.25)] transition duration-300 active:scale-[0.98] active:bg-[#DADDC5]"
               >
-                <ChevronLeft size={21} />
-              </button>
-              <button
-                type="button"
-                aria-label="Next destination"
-                onClick={onNext}
-                className="absolute right-0 top-1/2 z-30 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#FFFFFF]/22 bg-[#283A2C]/88 text-[#F1EFEC] shadow-[0_10px_24px_rgba(0,0,0,0.24)] backdrop-blur-md active:scale-95"
-              >
-                <ChevronRight size={21} />
-              </button>
-            </>
-          )}
-        </div>
+                Explore Our Packages
+              </Link>
+            </div>
 
-        <div
-          className="mt-3 flex min-h-5 items-center justify-center gap-2"
-          aria-label="Destination slides"
-        >
-          {heroSlides.map((slide, index) => (
-            <button
-              key={slide._id}
-              type="button"
-              onClick={() => onSelect(index)}
-              aria-label={`Show ${slide.name}`}
-              aria-current={index === activeSlideIndex ? 'true' : undefined}
-              className={`h-2 rounded-full border border-[#283A2C] transition-all duration-300 ${
-                index === activeSlideIndex
-                  ? 'w-7 bg-[#283A2C]'
-                  : 'w-2 bg-[#DADDC5]'
-              }`}
-            />
-          ))}
+            <div
+              className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-0"
+              aria-label="Destination slides"
+            >
+              {heroSlides.map((slide, index) => (
+                <button
+                  key={slide._id}
+                  type="button"
+                  onClick={() => onSelect(index)}
+                  aria-label={`Show ${slide.name}`}
+                  aria-current={index === activeSlideIndex ? 'true' : undefined}
+                  className="grid h-3 w-3 place-items-center rounded-full"
+                >
+                  <span
+                    className={`block rounded-full transition-all duration-300 ${
+                      index === activeSlideIndex
+                        ? 'h-2 w-2 bg-[#FFFFFF]'
+                        : 'h-1.5 w-1.5 bg-[#FFFFFF]/65'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </motion.article>
         </div>
       </div>
     </section>
