@@ -83,22 +83,22 @@ export default function VehicleRoadCarousel() {
       transition={{ duration: 0.55 }}
       className="mt-16"
     >
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="text-center md:text-left">
           <p className="text-[0.68rem] font-black uppercase tracking-[0.28em] text-[#283A2C]/50">
             Private Transport
           </p>
           <h2 className="mt-3 font-display text-4xl font-semibold leading-tight text-[#283A2C] sm:text-5xl">
             Travel in Comfort
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-[#283A2C]/62">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-[#283A2C]/62 md:mx-0">
             Private vehicles selected for smooth Sri Lankan journeys.
           </p>
         </div>
       </div>
 
       <div
-        className="mt-8 overflow-hidden rounded-[2rem] border border-[#FFFFFF]/18 bg-[#283A2C] p-4 text-[#F1EFEC] shadow-[0_28px_76px_rgba(40,58,44,0.20)] sm:p-6"
+        className="mt-8 overflow-hidden rounded-[2rem] border border-[#FFFFFF]/18 bg-[#283A2C] p-4 text-[#F1EFEC] sm:p-6"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Check,
   ChevronsUpDown,
@@ -69,7 +69,6 @@ export default function LocationSelectWithCreate({
   value,
 }) {
   const { showToast } = useToast();
-  const hasLoadedRef = useRef(false);
   const [internalLocations, setInternalLocations] = useState([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,7 +96,7 @@ export default function LocationSelectWithCreate({
       .map(normalizeLocation)
       .filter(Boolean)
       .forEach((location) => {
-        if (!selectedById.has(location._id)) {
+        if (selectedSet.has(location._id) && !selectedById.has(location._id)) {
           selectedById.set(location._id, location);
         }
       });
@@ -126,11 +125,9 @@ export default function LocationSelectWithCreate({
   );
 
   useEffect(() => {
-    if (hasLoadedRef.current) return undefined;
     if (providedLocations !== undefined) return undefined;
 
     let isMounted = true;
-    hasLoadedRef.current = true;
 
     async function loadLocations() {
       setIsLoading(true);

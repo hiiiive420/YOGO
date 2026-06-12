@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BookOpenText,
@@ -63,7 +63,7 @@ function NavigationItem({ icon: Icon, isActive, label, to }) {
     <Link
       to={to}
       aria-current={isActive ? 'page' : undefined}
-      className={`group relative flex min-h-[4.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-full px-1 text-center text-[#F1FAEE] transition duration-300 ${
+      className={`group relative flex min-h-[clamp(4rem,17vw,4.5rem)] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-full px-1 text-center text-[#F1FAEE] transition duration-300 ${
         isActive
           ? 'bg-[#FFFFFF]/10 text-[#F1FAEE] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]'
           : 'text-[#F1FAEE] active:bg-[#FFFFFF]/8'
@@ -74,7 +74,7 @@ function NavigationItem({ icon: Icon, isActive, label, to }) {
         strokeWidth={isActive ? 2.5 : 2}
         className="shrink-0"
       />
-      <span className="max-w-full truncate text-[0.68rem] font-bold leading-none text-[#F1FAEE] sm:text-[0.72rem]">
+      <span className="max-w-full truncate text-[0.68rem] font-bold leading-none text-[#F1FAEE] md:text-[0.72rem]">
         {label}
       </span>
       {isActive && (
@@ -85,8 +85,10 @@ function NavigationItem({ icon: Icon, isActive, label, to }) {
 }
 
 export default function MobileBottomNavigation() {
+  const [isMapOverlapping, setIsMapOverlapping] = useState(false);
   const [isPackagesOpen, setIsPackagesOpen] = useState(false);
   const location = useLocation();
+  const navRef = useRef(null);
   const packagesActive = isPackagesPath(location.pathname);
 
   useEffect(() => {
@@ -101,6 +103,52 @@ export default function MobileBottomNavigation() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    let frameId;
+
+    function updateMapOverlap() {
+      const nav = navRef.current;
+
+      if (!nav || window.matchMedia('(min-width: 768px)').matches) {
+        setIsMapOverlapping(false);
+        return;
+      }
+
+      const navZoneTop = window.innerHeight - nav.offsetHeight - 24;
+      const overlapsNavigation = [...document.querySelectorAll('[data-mobile-map]')].some(
+        (mapElement) => {
+          const bounds = mapElement.getBoundingClientRect();
+
+          return bounds.top < window.innerHeight && bounds.bottom > navZoneTop;
+        },
+      );
+
+      setIsMapOverlapping(overlapsNavigation);
+    }
+
+    function scheduleOverlapUpdate() {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(updateMapOverlap);
+    }
+
+    const mutationObserver = new MutationObserver(scheduleOverlapUpdate);
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('resize', scheduleOverlapUpdate);
+    window.addEventListener('scroll', scheduleOverlapUpdate, { passive: true });
+    scheduleOverlapUpdate();
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      mutationObserver.disconnect();
+      window.removeEventListener('resize', scheduleOverlapUpdate);
+      window.removeEventListener('scroll', scheduleOverlapUpdate);
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (isMapOverlapping) setIsPackagesOpen(false);
+  }, [isMapOverlapping]);
 
   return (
     <>
@@ -162,9 +210,14 @@ export default function MobileBottomNavigation() {
       </AnimatePresence>
 
       <nav
+        ref={navRef}
         aria-label="Mobile navigation"
         style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-        className="fixed left-1/2 z-[100] flex w-[calc(100vw-1.5rem)] max-w-[32rem] -translate-x-1/2 items-center rounded-full border border-[#FFFFFF]/15 bg-[#283A2C] p-1.5 text-[#F1FAEE] shadow-[0_20px_55px_rgba(0,0,0,0.30)] md:hidden"
+        className={`fixed left-1/2 z-[100] flex w-[clamp(18.5rem,92vw,24.375rem)] -translate-x-1/2 items-center rounded-full border border-[#FFFFFF]/15 bg-[#283A2C] p-1.5 text-[#F1FAEE] shadow-[0_20px_55px_rgba(0,0,0,0.30)] transition duration-300 md:hidden ${
+          isMapOverlapping
+            ? 'pointer-events-none translate-y-[calc(100%+2rem)] opacity-0'
+            : 'translate-y-0 opacity-100'
+        }`}
       >
         <NavigationItem
           {...navigationItems[0]}
@@ -180,7 +233,7 @@ export default function MobileBottomNavigation() {
           aria-controls="mobile-packages-menu"
           aria-expanded={isPackagesOpen}
           onClick={() => setIsPackagesOpen((current) => !current)}
-          className={`group flex min-h-[4.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-full px-1 text-center text-[#F1FAEE] transition duration-300 ${
+          className={`group flex min-h-[clamp(4rem,17vw,4.5rem)] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-full px-1 text-center text-[#F1FAEE] transition duration-300 ${
             isPackagesOpen
               ? 'bg-[#FFFFFF]/14 text-[#F1FAEE] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)]'
               : packagesActive
@@ -208,7 +261,7 @@ export default function MobileBottomNavigation() {
             </motion.span>
           </AnimatePresence>
           <span
-            className="max-w-full truncate text-[0.68rem] font-bold leading-none text-[#F1FAEE] sm:text-[0.72rem]"
+            className="max-w-full truncate text-[0.68rem] font-bold leading-none text-[#F1FAEE] md:text-[0.72rem]"
           >
             Packages
           </span>

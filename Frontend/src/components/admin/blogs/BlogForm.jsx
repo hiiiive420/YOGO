@@ -59,13 +59,11 @@ export default function BlogForm({
     handleSubmit,
     register,
     reset,
-    setValue,
     watch,
   } = useForm({
     defaultValues: getDefaultValues(initialValues),
   });
   const selectedFeatured = watch('featuredImage')?.[0];
-  const selectedRelatedLocations = watch('relatedLocations') || [];
 
   useEffect(() => {
     reset(getDefaultValues(initialValues));
@@ -96,12 +94,10 @@ export default function BlogForm({
     if (values.seoDescription.trim()) {
       formData.append('seoDescription', values.seoDescription);
     }
-    if (values.relatedLocations?.length) {
-      formData.append(
-        'relatedLocations',
-        JSON.stringify(values.relatedLocations),
-      );
-    }
+    formData.append(
+      'relatedLocations',
+      JSON.stringify(getLocationIds(values.relatedLocations)),
+    );
     if (values.featuredImage?.[0]) {
       formData.append('featuredImage', values.featuredImage[0]);
     }
@@ -207,18 +203,19 @@ export default function BlogForm({
           />
 
           <div>
-            <input type="hidden" {...register('relatedLocations')} />
-            <LocationSelectWithCreate
-              label="Related locations"
-              multiple
-              onChange={(locationIds) =>
-                setValue('relatedLocations', locationIds, {
-                  shouldDirty: true,
-                  shouldTouch: true,
-                })
-              }
-              placeholder="Select related blog locations"
-              value={selectedRelatedLocations}
+            <Controller
+              control={control}
+              name="relatedLocations"
+              render={({ field }) => (
+                <LocationSelectWithCreate
+                  label="Related locations"
+                  multiple
+                  onChange={(locationIds) => field.onChange(locationIds)}
+                  placeholder="Select or create related blog locations"
+                  selectedLocationObjects={initialValues?.relatedLocations || []}
+                  value={field.value || []}
+                />
+              )}
             />
           </div>
         </div>

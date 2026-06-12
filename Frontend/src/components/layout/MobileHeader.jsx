@@ -46,39 +46,46 @@ export default function MobileHeader() {
 
   return (
     <header
-      className={`pointer-events-none fixed inset-x-0 top-0 z-[70] w-full transform-gpu overflow-hidden transition-transform duration-500 ease-out md:hidden ${
+      className={`pointer-events-none fixed left-1/2 top-0 z-[70] w-full max-w-[26.875rem] -translate-x-1/2 transform-gpu overflow-hidden transition-transform duration-500 ease-out md:hidden ${
         isVisible ? 'translate-y-0' : '-translate-y-[calc(100%+1rem)]'
       }`}
     >
       <Link
         to="/"
         aria-label="YOGO Tours home"
-        className="pointer-events-auto relative z-10 mx-0 flex min-h-[5.25rem] w-full items-center justify-center gap-3 rounded-b-[4.5rem] bg-[#283A2C] px-4 pb-2 pt-[max(0.45rem,env(safe-area-inset-top))] text-[#FFFFFF] shadow-[0_12px_32px_rgba(40,58,44,0.26)] focus-visible:outline-none"
+        style={{
+          height:
+            'calc(clamp(3.75rem, 17.84vw, 4.8rem) + env(safe-area-inset-top))',
+          paddingTop: 'env(safe-area-inset-top)',
+        }}
+        className="pointer-events-auto relative z-10 mx-0 block w-full rounded-b-[clamp(3.5rem,17.44vw,4.7rem)] bg-[#283A2C] text-[#FFFFFF] focus-visible:outline-none"
       >
-        <span
-          className="relative h-16 w-16 shrink-0 rounded-full shadow-[0_4px_72.4px_-35px_rgba(147,148,137,0.55)]"
-        >
+        <span className="absolute inset-x-0 bottom-0 block h-[clamp(3.75rem,17.84vw,4.8rem)]">
           <span
-            aria-hidden="true"
-            className="absolute inset-2 rounded-full bg-[#939489]/30 blur-xl"
-          />
-          <img
-            src={logoMark}
-            alt="YOGO Tours"
-            className="relative h-16 w-16 rounded-full object-contain drop-shadow-[0_4px_18px_rgba(147,148,137,0.55)]"
-          />
-        </span>
-
-        <span className="flex min-w-0 flex-col justify-center">
-          <span className="relative block h-[1.9rem] w-[10.25rem] overflow-hidden">
+            className="absolute left-[12.56%] top-1/2 h-[clamp(3.25rem,16.96vw,4.5rem)] w-[clamp(3.25rem,16.96vw,4.5rem)] -translate-y-1/2 rounded-full shadow-[0_4px_72.4px_-35px_rgba(147,148,137,0.55)]"
+          >
+            <span
+              aria-hidden="true"
+              className="absolute inset-2 rounded-full bg-[#939489]/30 blur-xl"
+            />
             <img
-              src={sloganMark}
-              alt="Adventure is calling"
-              className="absolute left-1/2 top-0 h-[9.65rem] w-[9.65rem] max-w-none -translate-x-1/2 -translate-y-[4.36rem] object-contain"
+              src={logoMark}
+              alt="YOGO Tours"
+              className="relative h-full w-full rounded-full object-contain drop-shadow-[0_4px_18px_rgba(147,148,137,0.55)]"
             />
           </span>
-          <span className="block whitespace-nowrap font-display text-[1.7rem] font-semibold leading-none text-[#FFFFFF]">
-            Yo-Go Tours
+
+          <span className="absolute left-[35.76%] top-[calc(50%-0.2rem)] flex w-[41.12%] min-w-0 -translate-y-1/2 flex-col items-center justify-center text-center">
+            <span className="relative block h-[clamp(1.35rem,6.6vw,1.75rem)] w-full overflow-hidden">
+              <img
+                src={sloganMark}
+                alt="Adventure is calling"
+                className="absolute left-1/2 top-0 h-[clamp(8rem,37.4vw,10rem)] w-[clamp(8rem,37.4vw,10rem)] max-w-none -translate-x-1/2 -translate-y-[45.2%] object-contain"
+              />
+            </span>
+            <span className="block whitespace-nowrap font-['Bree_Serif'] text-[clamp(1.5rem,7.68vw,2.065rem)] font-normal leading-none tracking-normal text-[#FFFFFF]">
+              Yo-Go Tours
+            </span>
           </span>
         </span>
       </Link>

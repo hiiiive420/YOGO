@@ -74,13 +74,13 @@ function warnSkippedMapUpdate(error) {
 function useIsMobileMap() {
   const [isMobileMap, setIsMobileMap] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 640px)').matches;
+    return window.matchMedia('(max-width: 768px)').matches;
   });
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
-    const mediaQuery = window.matchMedia('(max-width: 640px)');
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
     const handleChange = () => setIsMobileMap(mediaQuery.matches);
 
     handleChange();
@@ -225,17 +225,25 @@ export default function TravelThemeRouteMap({
     'relative h-[34rem] overflow-hidden rounded-lg border border-white/10 bg-black shadow-luxury sm:h-[38rem] xl:h-[calc(100vh-14rem)] xl:min-h-[42rem]';
 
   return (
-    <div className={`${containerClassName || defaultContainerClassName} min-w-0`}>
+    <div
+      data-mobile-map
+      className={`${containerClassName || defaultContainerClassName} min-w-0`}
+    >
       <MapContainer
         center={SRI_LANKA_CENTER}
         className="h-full w-full max-w-full"
         maxBounds={SRI_LANKA_BOUNDS}
         maxBoundsViscosity={1}
         minZoom={isMobileMap ? 6 : SRI_LANKA_DEFAULT_ZOOM}
-        scrollWheelZoom
+        boxZoom={!isMobileMap}
+        doubleClickZoom={!isMobileMap}
+        dragging={!isMobileMap}
+        keyboard={!isMobileMap}
+        scrollWheelZoom={!isMobileMap}
         style={{ maxWidth: '100%', width: '100%' }}
+        touchZoom={isMobileMap ? 'center' : false}
         zoom={isMobileMap ? 6 : SRI_LANKA_DEFAULT_ZOOM}
-        zoomControl
+        zoomControl={!isMobileMap}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bree+Serif&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -29,6 +29,68 @@ body {
     radial-gradient(circle at top left, rgba(215, 189, 139, 0.14), transparent 30rem),
     radial-gradient(circle at bottom right, rgba(15, 124, 127, 0.12), transparent 28rem),
     #050505;
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body,
+  #root,
+  .mobile-min-screen,
+  .min-h-screen {
+    min-height: 100svh;
+  }
+
+  .h-screen {
+    height: 100svh;
+  }
+
+  .mobile-page-shell {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100svh;
+    margin-inline: auto;
+    overflow-x: hidden;
+  }
+
+  .mobile-main-shell {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .mobile-home-hero-frame {
+    height: clamp(31.25rem, 68svh, 36.875rem);
+  }
+
+  .mobile-shell-right {
+    right: max(1rem, calc((100vw - 430px) / 2 + 1rem));
+  }
+}
+
+@media (max-width: 767px) and (min-height: 1px) {
+  @supports (height: 100dvh) {
+    body,
+    #root,
+    .mobile-min-screen,
+    .min-h-screen {
+      min-height: 100dvh;
+    }
+
+    .h-screen {
+      height: 100dvh;
+    }
+
+    .mobile-home-hero-frame {
+      height: clamp(31.25rem, 68dvh, 36.875rem);
+    }
+  }
 }
 
 body,
@@ -147,6 +209,37 @@ img {
   transform: rotate(45deg);
 }
 
+.yogo-journal-pin {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #f1efec;
+  border-radius: 999px 999px 999px 0;
+  background: #283a2c;
+  box-shadow:
+    0 0 0 5px rgba(40, 58, 44, 0.16),
+    0 12px 28px rgba(40, 58, 44, 0.25);
+  transform: rotate(-45deg);
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease;
+  animation: yogo-pin-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.yogo-journal-pin span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #daddc5;
+}
+
+.yogo-journal-pin-active {
+  background: #d7bd8b;
+  box-shadow:
+    0 0 0 7px rgba(215, 189, 139, 0.24),
+    0 14px 32px rgba(40, 58, 44, 0.3);
+}
+
 .yogo-route-line {
   animation: yogo-route-flow 1.6s linear infinite;
 }
@@ -235,6 +328,23 @@ img {
 
 .yogo-map-popup .leaflet-popup-tip {
   background: #050505;
+}
+
+.yogo-map-popup-journal .leaflet-popup-content-wrapper {
+  overflow: hidden;
+  border: 1px solid rgba(40, 58, 44, 0.16);
+  border-radius: 12px;
+  background: #f1efec;
+  box-shadow: 0 20px 60px rgba(40, 58, 44, 0.2);
+}
+
+.yogo-map-popup-journal .leaflet-popup-content {
+  width: auto !important;
+  margin: 0;
+}
+
+.yogo-map-popup-journal .leaflet-popup-tip {
+  background: #f1efec;
 }
 
 .leaflet-popup-close-button {

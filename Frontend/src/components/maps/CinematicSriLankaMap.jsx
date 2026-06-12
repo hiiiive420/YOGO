@@ -28,6 +28,16 @@ function createPinIcon(sequence, isActive) {
   });
 }
 
+function createJournalPinIcon(isActive) {
+  return L.divIcon({
+    className: `yogo-journal-pin ${isActive ? 'yogo-journal-pin-active' : ''}`,
+    html: '<span></span>',
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -30],
+  });
+}
+
 function getCoordinate(stop) {
   if (!stop) return null;
 
@@ -116,12 +126,16 @@ function FlyToStory({ activeStop, coordinates }) {
 }
 
 export default function CinematicSriLankaMap({
+  connectStops = true,
   description = 'Pins and routes are generated from connected locations.',
   emptyMessage = 'Connected locations will appear here once they are selected in admin.',
   kicker = 'Interactive map',
   routeStops,
+  showMapMeta = true,
+  showSequence = true,
   stops = [],
   title = 'Sri Lanka route story.',
+  variant = 'cinematic',
 }) {
   const pinStops = useMemo(
     () => stops.filter((stop) => getCoordinate(stop)),
@@ -136,6 +150,7 @@ export default function CinematicSriLankaMap({
     [orderedRouteStops],
   );
   const [activeStop, setActiveStop] = useState(pinStops[0] || null);
+  const isJournal = variant === 'journal';
 
   useEffect(() => {
     setActiveStop(pinStops[0] || null);
@@ -144,23 +159,63 @@ export default function CinematicSriLankaMap({
   const hasPins = pinStops.length > 0;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-white/10 bg-soft-noise shadow-luxury">
+    <div
+      className={`relative overflow-hidden rounded-[1.35rem] border ${
+        isJournal
+          ? 'border-[#283A2C]/12 bg-[#F1EFEC] shadow-[0_20px_55px_rgba(40,58,44,0.10)]'
+          : 'border-white/10 bg-soft-noise shadow-luxury'
+      }`}
+    >
       <div className="grid min-h-[42rem] lg:grid-cols-[0.72fr_1fr]">
-        <div className="relative z-10 border-b border-white/10 bg-black/42 p-5 backdrop-blur-md sm:p-7 lg:border-b-0 lg:border-r">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-pearl text-obsidian">
+        <div
+          className={`relative z-10 border-b p-5 sm:p-7 lg:border-b-0 lg:border-r ${
+            isJournal
+              ? 'border-[#283A2C]/12 bg-[#DADDC5]/48 text-[#283A2C]'
+              : 'border-white/10 bg-black/42 backdrop-blur-md'
+          }`}
+        >
+          <div
+            className={`inline-flex h-14 w-14 items-center justify-center rounded-full ${
+              isJournal
+                ? 'bg-[#283A2C] text-[#F1EFEC]'
+                : 'bg-pearl text-obsidian'
+            }`}
+          >
             <Route size={25} />
           </div>
-          <p className="mt-6 text-xs font-extrabold uppercase tracking-[0.34em] text-champagne">
+          <p
+            className={`mt-6 text-xs font-extrabold uppercase tracking-[0.34em] ${
+              isJournal ? 'text-[#283A2C]/58' : 'text-champagne'
+            }`}
+          >
             {kicker}
           </p>
           <h3 className="mt-4 font-display text-4xl font-semibold leading-tight">
             {title}
           </h3>
-          <p className="mt-4 text-sm leading-7 text-pearl/62">{description}</p>
+          <p
+            className={`mt-4 text-sm leading-7 ${
+              isJournal ? 'text-[#283A2C]/68' : 'text-pearl/62'
+            }`}
+          >
+            {description}
+          </p>
 
           {!hasPins && (
-            <div className="mt-8 rounded-lg border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-sm leading-7 text-pearl/66">{emptyMessage}</p>
+            <div
+              className={`mt-8 rounded-lg border p-4 ${
+                isJournal
+                  ? 'border-[#283A2C]/12 bg-white/55'
+                  : 'border-white/10 bg-white/[0.04]'
+              }`}
+            >
+              <p
+                className={`text-sm leading-7 ${
+                  isJournal ? 'text-[#283A2C]/66' : 'text-pearl/66'
+                }`}
+              >
+                {emptyMessage}
+              </p>
             </div>
           )}
 
@@ -173,19 +228,27 @@ export default function CinematicSriLankaMap({
                   onClick={() => setActiveStop(stop)}
                   className={`group rounded-lg border p-4 text-left transition ${
                     activeStop?.id === stop.id
-                      ? 'border-champagne bg-champagne text-obsidian'
-                      : 'border-white/10 bg-white/[0.04] text-pearl hover:border-champagne/60'
+                      ? isJournal
+                        ? 'border-[#283A2C] bg-[#283A2C] text-[#F1EFEC] shadow-[0_12px_30px_rgba(40,58,44,0.18)]'
+                        : 'border-champagne bg-champagne text-obsidian'
+                      : isJournal
+                        ? 'border-[#283A2C]/12 bg-white/65 text-[#283A2C] hover:border-[#283A2C]/35'
+                        : 'border-white/10 bg-white/[0.04] text-pearl hover:border-champagne/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black ${
                         activeStop?.id === stop.id
-                          ? 'bg-obsidian text-champagne'
-                          : 'bg-pearl text-obsidian'
+                          ? isJournal
+                            ? 'bg-[#DADDC5] text-[#283A2C]'
+                            : 'bg-obsidian text-champagne'
+                          : isJournal
+                            ? 'bg-[#DADDC5] text-[#283A2C]'
+                            : 'bg-pearl text-obsidian'
                       }`}
                     >
-                      {index + 1}
+                      {showSequence ? index + 1 : <MapPin size={16} />}
                     </span>
                     <span>
                       <span className="block font-display text-2xl font-semibold leading-tight">
@@ -220,7 +283,7 @@ export default function CinematicSriLankaMap({
             />
             <FlyToStory activeStop={activeStop} coordinates={coordinates} />
 
-            {coordinates.length > 1 && (
+            {connectStops && coordinates.length > 1 && (
               <>
                 <Polyline
                   positions={coordinates}
@@ -247,14 +310,28 @@ export default function CinematicSriLankaMap({
             {pinStops.map((stop, index) => (
               <Marker
                 key={stop.id}
-                icon={createPinIcon(index + 1, activeStop?.id === stop.id)}
+                icon={
+                  showSequence
+                    ? createPinIcon(index + 1, activeStop?.id === stop.id)
+                    : createJournalPinIcon(activeStop?.id === stop.id)
+                }
                 position={[stop.latitude, stop.longitude]}
                 eventHandlers={{
                   click: () => setActiveStop(stop),
                 }}
               >
-                <Popup className="yogo-map-popup">
-                  <div className="w-56 overflow-hidden rounded-md bg-obsidian text-pearl">
+                <Popup
+                  className={
+                    isJournal ? 'yogo-map-popup-journal' : 'yogo-map-popup'
+                  }
+                >
+                  <div
+                    className={`w-56 overflow-hidden rounded-md ${
+                      isJournal
+                        ? 'bg-[#F1EFEC] text-[#283A2C]'
+                        : 'bg-obsidian text-pearl'
+                    }`}
+                  >
                     {stop.image && (
                       <img
                         src={stop.image}
@@ -264,7 +341,11 @@ export default function CinematicSriLankaMap({
                     )}
                     <div className="p-4">
                       {stop.badge && (
-                        <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.22em] text-champagne">
+                        <p
+                          className={`text-[0.62rem] font-extrabold uppercase tracking-[0.22em] ${
+                            isJournal ? 'text-[#283A2C]/52' : 'text-champagne'
+                          }`}
+                        >
                           {stop.badge}
                         </p>
                       )}
@@ -272,7 +353,11 @@ export default function CinematicSriLankaMap({
                         {stop.name}
                       </h4>
                       {stop.description && (
-                        <p className="mt-2 line-clamp-3 text-xs leading-5 text-pearl/66">
+                        <p
+                          className={`mt-2 line-clamp-3 text-xs leading-5 ${
+                            isJournal ? 'text-[#283A2C]/66' : 'text-pearl/66'
+                          }`}
+                        >
                           {stop.description}
                         </p>
                       )}
@@ -283,25 +368,27 @@ export default function CinematicSriLankaMap({
             ))}
           </MapContainer>
 
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.45 }}
-            className="pointer-events-none absolute bottom-4 left-4 right-4 z-[500] flex flex-wrap gap-3"
-          >
-            <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
-              <MapPin size={15} className="text-champagne" />
-              {pinStops.length} pins
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
-              <CircleDot size={15} className="text-champagne" />
-              {coordinates.length} stops
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
-              <Navigation2 size={15} className="text-champagne" />
-              Fly focus
-            </div>
-          </motion.div>
+          {showMapMeta && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.45 }}
+              className="pointer-events-none absolute bottom-4 left-4 right-4 z-[500] flex flex-wrap gap-3"
+            >
+              <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
+                <MapPin size={15} className="text-champagne" />
+                {pinStops.length} pins
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
+                <CircleDot size={15} className="text-champagne" />
+                {coordinates.length} stops
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
+                <Navigation2 size={15} className="text-champagne" />
+                Fly focus
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

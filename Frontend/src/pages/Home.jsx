@@ -326,12 +326,12 @@ function MobileHomeHero({
   }
 
   return (
-    <section className="relative overflow-hidden bg-[#F1EFEC] pb-3 pt-[calc(5.25rem-2.25rem)] text-[#FFFFFF] md:hidden">
+    <section className="relative overflow-hidden bg-[#F1EFEC] pt-[clamp(2.5rem,11vw,3rem)] text-[#FFFFFF] md:hidden">
       <div className="relative mx-auto flex w-full max-w-[25rem] flex-col items-center">
-        <div className="relative h-[clamp(32.5rem,calc(100svh-6.25rem),36.25rem)] w-full">
+        <div className="mobile-home-hero-frame relative w-full">
           {heroSlides.length > 1 && (
             <>
-              <div className="pointer-events-none absolute inset-y-0 left-[calc(6%-0.75rem)] w-[88%] overflow-hidden rounded-[6px] border border-[#FFFFFF]/55 bg-[#283A2C] opacity-50 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
+              <div className="pointer-events-none absolute left-[2.16%] top-0 z-0 h-[96.28%] w-[95.76%] overflow-hidden border-x border-t border-[#DADDC5]/75 bg-[#283A2C] opacity-45">
                 {previousSlide.image ? (
                   <img
                     src={previousSlide.image}
@@ -341,10 +341,9 @@ function MobileHomeHero({
                 ) : (
                   <PlaceholderVisual label={previousSlide.name} />
                 )}
-                <div className="absolute inset-0 bg-black/50" />
               </div>
 
-              <div className="pointer-events-none absolute inset-y-0 right-[calc(6%-0.75rem)] w-[88%] overflow-hidden rounded-[6px] border border-[#FFFFFF]/55 bg-[#283A2C] opacity-50 shadow-[0_18px_42px_rgba(40,58,44,0.18)]">
+              <div className="pointer-events-none absolute left-[4.48%] top-[1.47%] z-10 h-[96.28%] w-[91.04%] overflow-hidden border-x border-t border-[#DADDC5]/80 bg-[#283A2C] opacity-[0.58]">
                 {nextSlide.image ? (
                   <img
                     src={nextSlide.image}
@@ -354,7 +353,6 @@ function MobileHomeHero({
                 ) : (
                   <PlaceholderVisual label={nextSlide.name} />
                 )}
-                <div className="absolute inset-0 bg-black/50" />
               </div>
             </>
           )}
@@ -364,64 +362,70 @@ function MobileHomeHero({
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.16}
             onDragEnd={handleDragEnd}
-            className="absolute inset-y-0 left-[6%] z-20 w-[88%] cursor-grab touch-pan-y overflow-hidden rounded-[6px] border border-[#FFFFFF]/20 bg-[#283A2C] shadow-[0_28px_70px_rgba(40,58,44,0.30)] active:cursor-grabbing"
+            className="absolute -bottom-px left-[6.48%] top-[0.28%] z-20 w-[86.16%] cursor-grab touch-pan-y overflow-hidden border-x border-t border-[#FFFFFF]/20 bg-[#283A2C] active:cursor-grabbing"
           >
             {activeSlide.image ? (
               <img
                 src={activeSlide.image}
                 alt={activeSlide.name}
-                className="absolute inset-0 h-full w-full object-cover opacity-100"
+                className="absolute -bottom-px inset-x-0 top-0 h-[calc(100%+1px)] w-full object-cover opacity-100"
               />
             ) : (
               <PlaceholderVisual label={activeSlide.name} />
             )}
 
             <div className="absolute inset-0 bg-black/50" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/62" />
 
-            <div className="relative flex h-full flex-col px-5 pb-[3.25rem] pt-12">
-              <div className="max-w-[88%]">
+            <div className="relative flex h-full flex-col px-3.5 pb-20 pt-12">
+              <div className="max-w-[84.8%]">
                 <p className="text-[0.58rem] font-black uppercase tracking-[0.28em] text-[#DADDC5]">
 
                 </p>
-                <h1 className="mt-3 break-words font-display text-[2.35rem] font-semibold leading-[0.98] text-[#FFFFFF]">
+                <h1 className="mt-3 break-words font-['Bree_Serif'] text-[clamp(2.375rem,10.24vw,2.75rem)] font-normal leading-none text-[#FFFFFF]">
                   {activeSlide.name}
                 </h1>
-                <p className="mt-4 line-clamp-5 text-pretty text-xs leading-5 text-[#FFFFFF]/88">
+                <p className="mt-4 line-clamp-6 text-pretty font-['Bree_Serif'] text-[clamp(0.7rem,2.88vw,0.75rem)] font-normal leading-none text-[#FFFFFF]/88">
                   {activeSlide.description}
                 </p>
               </div>
 
-              <Link
-                to="/travel-themes"
-                className="mx-auto mt-auto inline-flex w-auto max-w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#F1EFEC] px-6 py-3.5 text-center text-[0.65rem] font-bold tracking-[0.02em] text-[#283A2C] shadow-[0_0_18px_rgba(218,221,197,0.65),0_8px_24px_rgba(40,58,44,0.25)] transition duration-300 active:scale-[0.98] active:bg-[#DADDC5]"
-              >
-                Explore Our Packages
-              </Link>
             </div>
 
             <div
-              className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-0"
-              aria-label="Destination slides"
+              className="absolute bottom-[clamp(0.3rem,1.36vw,0.375rem)] left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-[clamp(0.5rem,2.32vw,0.625rem)]"
             >
-              {heroSlides.map((slide, index) => (
-                <button
-                  key={slide._id}
-                  type="button"
-                  onClick={() => onSelect(index)}
-                  aria-label={`Show ${slide.name}`}
-                  aria-current={index === activeSlideIndex ? 'true' : undefined}
-                  className="grid h-3 w-3 place-items-center rounded-full"
-                >
-                  <span
-                    className={`block rounded-full transition-all duration-300 ${
-                      index === activeSlideIndex
-                        ? 'h-2 w-2 bg-[#FFFFFF]'
-                        : 'h-1.5 w-1.5 bg-[#FFFFFF]/65'
-                    }`}
-                  />
-                </button>
-              ))}
+              <Link
+                to="/travel-themes"
+                className="inline-flex h-[clamp(2.4375rem,10.4vw,2.8rem)] w-[clamp(10.15rem,43.28vw,11.625rem)] items-center justify-center whitespace-nowrap rounded-[clamp(1.125rem,4.8vw,1.3rem)] bg-[#F1FAEE] px-[clamp(0.75rem,4vw,1.075rem)] text-center text-[clamp(0.78rem,3.12vw,0.84rem)] font-bold tracking-[0.02em] text-[#283A2C] shadow-[0_0_18px_rgba(218,221,197,0.65),0_8px_24px_rgba(40,58,44,0.25)] transition duration-300 active:scale-[0.98] active:bg-[#DADDC5]"
+              >
+                Explore Our Packages
+              </Link>
+
+              <div
+                className="flex items-center justify-center gap-0"
+                aria-label="Destination slides"
+              >
+                {heroSlides.map((slide, index) => (
+                  <button
+                    key={slide._id}
+                    type="button"
+                    onClick={() => onSelect(index)}
+                    aria-label={`Show ${slide.name}`}
+                    aria-current={
+                      index === activeSlideIndex ? 'true' : undefined
+                    }
+                    className="grid h-[clamp(0.75rem,3.28vw,0.875rem)] w-[clamp(0.75rem,3.28vw,0.875rem)] place-items-center rounded-full"
+                  >
+                    <span
+                      className={`block rounded-full transition-all duration-300 ${
+                        index === activeSlideIndex
+                          ? 'h-full w-full bg-[#DADDC5]'
+                          : 'h-[clamp(0.5rem,2.4vw,0.65rem)] w-[clamp(0.5rem,2.4vw,0.65rem)] bg-[#DADDC5]/75'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.article>
         </div>
@@ -592,7 +596,7 @@ function DiscoverSriLankaRouteSection() {
           })}
         </div>
 
-        <div className="relative mx-auto mt-2 h-[18rem] w-full overflow-visible md:hidden">
+        <div className="relative mx-auto -mt-3 h-[13rem] w-full overflow-visible md:hidden">
           <svg
             className="absolute inset-0 h-full w-full overflow-visible"
             viewBox="0 0 1200 340"
@@ -811,14 +815,20 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
   }
 
   return (
-    <section className="relative overflow-hidden bg-[#283A2C] px-4 pb-[5.5rem] pt-[4.5rem] text-[#FFFFFF] sm:px-6 sm:py-16 lg:px-8 lg:py-[4.5rem]">
-      <div className="mx-auto grid max-w-[92rem] gap-8 lg:min-h-[34rem] lg:grid-cols-[minmax(15rem,0.28fr)_minmax(0,0.72fr)] lg:items-center lg:gap-10">
+    <section className="relative overflow-hidden bg-[#283A2C] px-4 pb-[6rem] pt-[3.75rem] text-[#FFFFFF] sm:px-6 sm:py-16 lg:px-8 lg:py-[4.5rem]">
+      <div className="mx-auto grid max-w-[92rem] gap-5 sm:gap-8 lg:min-h-[34rem] lg:grid-cols-[minmax(15rem,0.28fr)_minmax(0,0.72fr)] lg:items-center lg:gap-10">
         <div className="lg:self-start lg:pt-4">
-          <div className="max-w-[20rem] sm:max-w-sm">
+          <div className="mx-auto max-w-[20rem] text-center sm:max-w-sm lg:mx-0 lg:text-left">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-[#DADDC5]">
               Popularly
             </p>
-            <h2 className="mt-3 font-display text-[2.65rem] font-semibold leading-[0.98] text-[#F1EFEC] sm:text-5xl lg:text-[3.45rem]">
+            <h2 className="mt-3 font-display text-[clamp(1.75rem,7.4vw,1.95rem)] font-semibold leading-[0.98] text-[#F1EFEC] md:hidden">
+              <span className="block whitespace-nowrap">
+                Most Popular Sri Lankan
+              </span>
+              <span className="block">Destinations</span>
+            </h2>
+            <h2 className="mt-3 hidden font-display text-5xl font-semibold leading-[0.98] text-[#F1EFEC] md:block lg:text-[3.45rem]">
               <span className="block sm:inline">Most Popular</span>{' '}
               <span className="block sm:inline">Sri Lankan</span>
               <span className="block">Destinations</span>
@@ -827,7 +837,7 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
         </div>
 
         <div className="min-w-0">
-          <div className="mb-8 flex items-center justify-end gap-5 sm:mb-7">
+          <div className="mb-7 hidden items-center justify-end gap-5 md:flex">
             {locations.length > 0 && (
               <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-[#F1EFEC]/72">
                 <span className="text-[#DADDC5]">
@@ -864,15 +874,15 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.14}
             onDragEnd={handleMobileLocationDragEnd}
-            className="relative h-[26rem] cursor-grab touch-pan-y overflow-visible active:cursor-grabbing md:hidden"
+            className="relative h-[15rem] cursor-grab touch-pan-y overflow-visible active:cursor-grabbing md:hidden"
             onPointerEnter={() => setIsCarouselPaused(true)}
             onPointerLeave={() => setIsCarouselPaused(false)}
           >
             {status === 'loading' && (
               <>
-                <div className="absolute left-[-48vw] top-8 h-[21rem] w-[62vw] animate-pulse rounded-lg bg-[#DADDC5]/12" />
-                <div className="absolute left-[6vw] top-0 h-[25rem] w-[80vw] animate-pulse rounded-lg bg-[#DADDC5]/20" />
-                <div className="absolute right-[-48vw] top-8 h-[21rem] w-[62vw] animate-pulse rounded-lg bg-[#DADDC5]/12" />
+                <div className="absolute left-[-45%] top-5 h-[11rem] w-[56%] animate-pulse rounded-lg bg-[#DADDC5]/12" />
+                <div className="absolute left-[9%] top-0 h-[14rem] w-[82%] animate-pulse rounded-lg bg-[#DADDC5]/20" />
+                <div className="absolute right-[-45%] top-5 h-[11rem] w-[56%] animate-pulse rounded-lg bg-[#DADDC5]/12" />
               </>
             )}
 
@@ -890,16 +900,16 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
                   animate={{
                     opacity: isActive ? 1 : 0.52,
                     scale: isActive ? 1 : 0.9,
-                    y: isActive ? 0 : 24,
+                    y: isActive ? 0 : 14,
                   }}
                   exit={{ opacity: 0, scale: 0.88, y: 18 }}
                   transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
                   className={`absolute top-0 overflow-hidden rounded-lg border-[1.5px] border-[#283A2C] bg-[#DADDC5] text-left text-[#283A2C] shadow-[0_24px_70px_rgba(0,0,0,0.28)] ${
                     isActive
-                      ? 'left-[6vw] z-20 h-[25rem] w-[80vw]'
+                      ? 'left-[9%] z-20 h-[14rem] w-[82%]'
                       : position === 'previous'
-                        ? 'left-[-48vw] z-10 h-[21rem] w-[62vw]'
-                        : 'right-[-48vw] z-10 h-[21rem] w-[62vw]'
+                        ? 'left-[-45%] z-10 h-[11rem] w-[56%]'
+                        : 'right-[-45%] z-10 h-[11rem] w-[56%]'
                   }`}
                 >
                   {location.image ? (
@@ -916,39 +926,60 @@ function TopLocationsSection({ locations = [], status = 'idle' }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#283A2C]/92 via-[#283A2C]/16 to-transparent" />
                   <div
                     className={`absolute inset-x-0 bottom-0 ${
-                      isActive ? 'p-4' : 'p-3'
+                      isActive ? 'p-3.5' : 'p-3'
                     }`}
                   >
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#F1EFEC]/92 px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[#283A2C]">
-                      <MapPin size={13} />
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1EFEC]/92 px-2.5 py-1 text-[0.52rem] font-black uppercase tracking-[0.14em] text-[#283A2C]">
+                      <MapPin size={11} />
                       Top Location
                     </div>
                     <h3
-                      className={`mt-3 line-clamp-2 break-words font-display font-semibold text-[#FFFFFF] ${
+                      className={`mt-2 line-clamp-1 break-words font-display font-semibold text-[#FFFFFF] ${
                         isActive
-                          ? 'text-[2rem] leading-none'
-                          : 'text-2xl leading-tight'
+                          ? 'text-[1.75rem] leading-none'
+                          : 'text-xl leading-tight'
                       }`}
                     >
                       {location.name}
                     </h3>
                     <p
-                      className={`mt-2 break-words text-[0.78rem] leading-5 text-[#F1EFEC]/78 ${
-                        isActive ? 'line-clamp-2' : 'line-clamp-1'
+                      className={`mt-1.5 break-words text-[0.68rem] leading-4 text-[#F1EFEC]/78 ${
+                        isActive ? 'line-clamp-1' : 'line-clamp-1'
                       }`}
                     >
                       {getLocationDescription(location)}
                     </p>
                     {isActive && (
-                      <span className="mt-4 inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#DADDC5]">
+                      <span className="mt-2.5 inline-flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#DADDC5]">
                         Discover More
-                        <ArrowRight size={15} />
+                        <ArrowRight size={13} />
                       </span>
                     )}
                   </div>
                 </motion.button>
               ))}
           </motion.div>
+
+          <div className="absolute bottom-5 right-4 z-30 flex gap-2 md:hidden">
+            <button
+              type="button"
+              aria-label="Previous top location"
+              onClick={goToPreviousLocation}
+              disabled={locations.length < 2}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#FFFFFF]/20 bg-[#FFFFFF]/8 text-[#FFFFFF] backdrop-blur-md transition active:bg-[#FFFFFF] active:text-[#283A2C] disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <ChevronLeft size={19} />
+            </button>
+            <button
+              type="button"
+              aria-label="Next top location"
+              onClick={goToNextLocation}
+              disabled={locations.length < 2}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#FFFFFF]/20 bg-[#FFFFFF]/8 text-[#FFFFFF] backdrop-blur-md transition active:bg-[#FFFFFF] active:text-[#283A2C] disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <ChevronRight size={19} />
+            </button>
+          </div>
 
           <div
             className="relative hidden h-[25rem] overflow-hidden md:block lg:h-[28rem] xl:h-[29rem]"
@@ -1096,24 +1127,28 @@ function TopPackagesSection({ packages = [], status = 'idle' }) {
   const offsets = getTopPackageOffsets(length);
 
   return (
-    <section className="relative overflow-hidden bg-[#283A2C] px-4 py-16 text-[#F1EFEC] sm:px-6 lg:px-8 lg:py-20">
+    <section className="relative overflow-hidden bg-[#283A2C] px-4 pb-8 pt-12 text-[#F1EFEC] sm:px-6 md:py-16 lg:px-8 lg:py-20">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_60%,rgba(218,221,197,0.12),transparent_24rem),linear-gradient(180deg,rgba(255,255,255,0.035),transparent_45%)]" />
       <div className="pointer-events-none absolute left-[18%] top-[36%] h-72 w-72 rounded-full bg-[#DADDC5]/8 blur-3xl" />
       <div className="pointer-events-none absolute bottom-14 right-[18%] h-80 w-80 rounded-full bg-[#FFFFFF]/5 blur-3xl" />
 
       <div className="relative mx-auto max-w-[78rem]">
-        <div className="flex flex-col gap-6 border-b border-[#FFFFFF]/10 pb-8 md:flex-row md:items-end md:justify-between">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between md:gap-6 md:border-b md:border-[#FFFFFF]/10 md:pb-8">
+          <div className="text-center md:text-left">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-[#DADDC5]">
               Packages
             </p>
-            <h2 className="mt-2 max-w-md text-balance font-display text-4xl font-semibold uppercase leading-[0.95] text-[#FFFFFF] sm:text-5xl lg:text-[3.25rem]">
+            <h2 className="mt-2 font-display text-[clamp(2rem,9vw,2.45rem)] font-semibold uppercase leading-[0.95] text-[#FFFFFF] md:hidden">
+              <span className="block">Top Packages</span>
+              <span className="block">For You</span>
+            </h2>
+            <h2 className="mt-2 hidden max-w-md text-balance font-display text-4xl font-semibold uppercase leading-[0.95] text-[#FFFFFF] md:block sm:text-5xl lg:text-[3.25rem]">
               Top Packages That
               <span className="block">For You</span>
             </h2>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="hidden items-center gap-5 md:flex">
             {length > 0 && (
               <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-[#F1EFEC]/60">
                 <span className="text-[#DADDC5]">
@@ -1153,7 +1188,7 @@ function TopPackagesSection({ packages = [], status = 'idle' }) {
         </div>
 
         <div
-          className="relative mt-14 min-h-[31rem] md:min-h-[35rem]"
+          className="relative mt-7 min-h-[25rem] md:mt-14 md:min-h-[35rem]"
           onPointerEnter={() => setIsCarouselPaused(true)}
           onPointerLeave={() => setIsCarouselPaused(false)}
         >
@@ -1518,7 +1553,7 @@ export default function Home() {
   }
 
   return (
-    <div className="overflow-hidden bg-obsidian">
+    <div className="overflow-hidden bg-[#F1EFEC] md:bg-obsidian">
       <MobileHomeHero
         activeSlideIndex={activeSlideIndex}
         heroSlides={heroSlides}

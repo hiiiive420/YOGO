@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   CalendarDays,
@@ -135,6 +135,21 @@ function MobileThemeDial({
   const itemRefs = useRef(new Map());
   const frameRef = useRef(null);
   const scrollTimerRef = useRef(null);
+  const positionedLoopRef = useRef('');
+  const themeBySlug = useMemo(
+    () => new Map(themes.map((theme) => [theme.slug, theme])),
+    [themes],
+  );
+  const loopedThemes = useMemo(() => {
+    const copies = themes.length > 1 ? 3 : 1;
+
+    return Array.from({ length: copies }, (_, copyIndex) =>
+      themes.map((theme) => ({ copyIndex, theme })),
+    ).flat();
+  }, [themes]);
+  const loopSignature = themes
+    .map((theme) => theme._id || theme.slug)
+    .join('|');
 
   const updateDialPositions = useCallback(() => {
     window.cancelAnimationFrame(frameRef.current);
@@ -145,10 +160,7 @@ function MobileThemeDial({
       const railCenter = rail.clientWidth / 2;
       const arcRadius = rail.clientWidth / 2;
 
-      themes.forEach((theme) => {
-        const item = itemRefs.current.get(theme.slug);
-        if (!item) return;
-
+      itemRefs.current.forEach((item) => {
         const itemCenter =
           item.offsetLeft + item.offsetWidth / 2 - rail.scrollLeft;
         const signedDistance = Math.min(
@@ -162,23 +174,79 @@ function MobileThemeDial({
         item.style.transform = `translateY(${y}px) rotate(${rotation}deg)`;
       });
     });
+  }, []);
+
+  const keepLoopCentered = useCallback(() => {
+    const rail = railRef.current;
+    const anchorTheme = themes[0];
+
+    if (!rail || themes.length < 2 || !anchorTheme) return;
+
+    const anchorKey = anchorTheme._id || anchorTheme.slug;
+    const middleAnchor = itemRefs.current.get(`1-${anchorKey}`);
+    const trailingAnchor = itemRefs.current.get(`2-${anchorKey}`);
+
+    if (!middleAnchor || !trailingAnchor) return;
+
+    const cycleWidth = trailingAnchor.offsetLeft - middleAnchor.offsetLeft;
+    const viewportCenter = rail.scrollLeft + rail.clientWidth / 2;
+
+    if (viewportCenter < middleAnchor.offsetLeft) {
+      rail.scrollLeft += cycleWidth;
+    } else if (viewportCenter >= trailingAnchor.offsetLeft) {
+      rail.scrollLeft -= cycleWidth;
+    }
   }, [themes]);
 
   useEffect(() => {
     const rail = railRef.current;
-    const selectedItem = itemRefs.current.get(selectedThemeSlug);
+    const selectedTheme = themeBySlug.get(selectedThemeSlug);
 
-    if (rail && selectedItem) {
+    if (!rail || !selectedTheme) {
+      updateDialPositions();
+      return;
+    }
+
+    const matchingItems = [...itemRefs.current.values()].filter(
+      (item) => item.dataset.themeSlug === selectedThemeSlug,
+    );
+    const viewportCenter = rail.scrollLeft + rail.clientWidth / 2;
+    const middleKey = `1-${selectedTheme._id || selectedTheme.slug}`;
+    const shouldPositionMiddleCopy =
+      themes.length > 1 && positionedLoopRef.current !== loopSignature;
+    const selectedItem = shouldPositionMiddleCopy
+      ? itemRefs.current.get(middleKey)
+      : matchingItems.reduce((closest, item) => {
+          if (!closest) return item;
+
+          const itemDistance = Math.abs(
+            item.offsetLeft + item.offsetWidth / 2 - viewportCenter,
+          );
+          const closestDistance = Math.abs(
+            closest.offsetLeft + closest.offsetWidth / 2 - viewportCenter,
+          );
+
+          return itemDistance < closestDistance ? item : closest;
+        }, null);
+
+    if (selectedItem) {
       rail.scrollTo({
-        behavior: 'smooth',
+        behavior: shouldPositionMiddleCopy ? 'auto' : 'smooth',
         left:
           selectedItem.offsetLeft -
           (rail.clientWidth - selectedItem.offsetWidth) / 2,
       });
     }
 
+    positionedLoopRef.current = loopSignature;
     updateDialPositions();
-  }, [selectedThemeSlug, updateDialPositions]);
+  }, [
+    loopSignature,
+    selectedThemeSlug,
+    themeBySlug,
+    themes.length,
+    updateDialPositions,
+  ]);
 
   useEffect(() => {
     updateDialPositions();
@@ -192,8 +260,8 @@ function MobileThemeDial({
   }, [updateDialPositions]);
 
   function handleRailScroll() {
+    keepLoopCentered();
     updateDialPositions();
-    if (lockedTheme) return;
 
     window.clearTimeout(scrollTimerRef.current);
     scrollTimerRef.current = window.setTimeout(() => {
@@ -205,9 +273,9 @@ function MobileThemeDial({
       let closestTheme = null;
       let closestDistance = Number.POSITIVE_INFINITY;
 
-      themes.forEach((theme) => {
-        const item = itemRefs.current.get(theme.slug);
-        if (!item) return;
+      itemRefs.current.forEach((item) => {
+        const theme = themeBySlug.get(item.dataset.themeSlug);
+        if (!theme) return;
 
         const itemBounds = item.getBoundingClientRect();
         const distance = Math.abs(
@@ -285,7 +353,7 @@ function MobileThemeDial({
         <span className="mx-auto mt-1 block h-0.5 w-16 bg-[#283A2C]" />
       </div>
 
-      <div className="relative left-1/2 -mt-1 h-[6.75rem] w-screen -translate-x-1/2 overflow-hidden">
+      <div className="relative left-1/2 -mt-1 h-[6.75rem] w-[min(100vw,26.875rem)] -translate-x-1/2 overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-full">
           <svg
             aria-hidden="true"
@@ -346,23 +414,25 @@ function MobileThemeDial({
           onScroll={handleRailScroll}
           className="absolute inset-x-0 bottom-1 top-0 z-10 flex touch-pan-x snap-x snap-mandatory items-start gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain px-[calc(50%-2.25rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {themes.map((theme) => {
+          {loopedThemes.map(({ copyIndex, theme }) => {
             const isActive = theme.slug === selectedThemeSlug;
+            const instanceKey = `${copyIndex}-${theme._id || theme.slug}`;
             const sharedClassName =
               'flex w-[4.5rem] flex-col items-center transition duration-300';
             const setItemRef = (node) => {
               if (node) {
-                itemRefs.current.set(theme.slug, node);
+                itemRefs.current.set(instanceKey, node);
               } else {
-                itemRefs.current.delete(theme.slug);
+                itemRefs.current.delete(instanceKey);
               }
             };
 
             if (lockedTheme && themeHero) {
               return (
                 <div
-                  key={theme._id}
+                  key={instanceKey}
                   ref={setItemRef}
+                  data-theme-slug={theme.slug}
                   className="w-[4.5rem] shrink-0 snap-center transition-transform duration-150 ease-out"
                 >
                   <Link
@@ -377,8 +447,9 @@ function MobileThemeDial({
 
             return (
               <div
-                key={theme._id}
+                key={instanceKey}
                 ref={setItemRef}
+                data-theme-slug={theme.slug}
                 className="w-[4.5rem] shrink-0 snap-center transition-transform duration-150 ease-out"
               >
                 <button
@@ -443,7 +514,7 @@ function MobilePackagePills({
   if (itineraries.length === 0 && status !== 'loading') return null;
 
   return (
-    <div className="mt-2.5 flex w-full snap-x snap-mandatory items-center gap-2.5 overflow-x-auto px-1.5 pb-1.5 scroll-px-1.5 md:hidden [scrollbar-width:none] [&>*:last-child]:mr-1.5 [&::-webkit-scrollbar]:hidden">
+    <div className="mt-2.5 flex w-full flex-wrap items-center justify-center gap-2.5 px-1.5 pb-1.5 md:hidden">
       {status === 'loading' && (
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#283A2C]/20 bg-[#FFFFFF]">
           <Loader2 className="animate-spin text-[#283A2C]" size={16} />
@@ -458,7 +529,7 @@ function MobilePackagePills({
             key={itinerary._id}
             type="button"
             onClick={() => onSelect(itinerary._id)}
-            className={`min-w-[6.5rem] max-w-[72vw] shrink-0 snap-start rounded-full border px-3.5 py-2 text-[0.68rem] font-bold transition duration-300 ${
+            className={`min-w-[6.5rem] max-w-full rounded-full border px-3.5 py-2 text-[0.68rem] font-bold transition duration-300 ${
               isActive
                 ? 'border-[#283A2C] bg-[#283A2C] text-[#FFFFFF] shadow-[0_8px_22px_rgba(40,58,44,0.28)]'
                 : 'border-[#283A2C]/45 bg-[#FFFFFF] text-[#283A2C] shadow-[0_4px_12px_rgba(40,58,44,0.06)]'
@@ -726,31 +797,29 @@ function MobileItinerarySummary({ itinerary, theme, viewTourHref }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32 }}
-      className="mt-2 overflow-hidden rounded-2xl border border-[#283A2C]/10 bg-[#FFFFFF] px-5 py-4 text-center text-[#283A2C] shadow-[0_16px_38px_rgba(40,58,44,0.10)] md:hidden"
+      className="relative mt-2 h-[clamp(8.25rem,32.48vw,8.75rem)] w-full overflow-hidden rounded-[clamp(0.55rem,2.48vw,0.7rem)] bg-[#FFFFFF] text-center text-[#283A2C] md:hidden"
     >
-      <div className="flex min-w-0 items-center justify-between gap-3 text-left">
-        <h2 className="min-w-0 flex-1 break-words font-display text-2xl font-semibold leading-tight">
-          {itinerary.title}
-        </h2>
-        {duration && (
-          <span className="max-w-[48%] shrink-0 rounded-full border border-[#DADDC5] bg-[#DADDC5] px-3 py-1.5 text-center text-[0.62rem] font-black leading-tight text-[#283A2C]">
-            {duration}
-          </span>
-        )}
-      </div>
+      <h2 className="absolute left-[3.52%] top-[5.17%] line-clamp-1 w-[52.37%] break-words text-left font-[Arial] text-[clamp(0.95rem,3.84vw,1.03rem)] font-black leading-[0.95] tracking-[0.08em]">
+        {itinerary.title}
+      </h2>
+
+      {duration && (
+        <span className="absolute right-[5.36%] top-[3.94%] grid h-[16.01%] w-[36.29%] place-items-center rounded-[clamp(0.55rem,2.48vw,0.7rem)] bg-[#D7BD8B] px-2 text-center font-[Arial] text-[clamp(0.48rem,1.92vw,0.52rem)] font-bold leading-none text-[#283A2C]">
+          {duration}
+        </span>
+      )}
 
       {description && (
-        <p className="mx-auto mt-3 line-clamp-3 max-w-sm break-words text-xs leading-5 text-[#283A2C]/68">
+        <p className="absolute left-[3.25%] top-[26.35%] line-clamp-3 h-[40.89%] w-[91.39%] break-words font-[Arial] text-[clamp(0.625rem,2.56vw,0.69rem)] font-normal leading-[1.65] tracking-[0.12em] text-[#283A2C]">
           {description}
         </p>
       )}
 
       <Link
         to={viewTourHref}
-        className="mx-auto mt-4 inline-flex min-h-10 min-w-36 items-center justify-center gap-2 rounded-full bg-[#283A2C] px-6 text-xs font-bold text-[#F1EFEC] shadow-[0_8px_22px_rgba(40,58,44,0.24)] transition active:scale-[0.98]"
+        className="absolute left-[31.9%] top-[70.94%] inline-flex h-[18.97%] w-[36.2%] items-center justify-center rounded-[clamp(0.75rem,3.36vw,0.9rem)] bg-[#283A2C] px-3 font-[Arial] text-[clamp(0.66rem,2.64vw,0.72rem)] font-bold text-[#F1EFEC] shadow-[0_4px_24px_3px_rgba(0,0,0,0.30)] transition active:scale-[0.98]"
       >
         Explore More
-        <ArrowRight size={14} />
       </Link>
     </motion.article>
   );
@@ -795,15 +864,15 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
       transition={{ duration: 0.55 }}
       className="mt-16"
     >
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="text-center md:text-left">
           <p className="text-[0.68rem] font-black uppercase tracking-[0.28em] text-[#283A2C]/50">
             Day By Day
           </p>
-          <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-[#283A2C] sm:text-5xl">
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-[#283A2C] md:text-5xl">
             Activity Highlights
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-[#283A2C]/62">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-[#283A2C]/62 md:mx-0">
             {itinerary?.title
               ? `${itinerary.title} arranged as clear daily experiences.`
               : 'A clear view of each daily experience in this tour plan.'}
@@ -813,7 +882,7 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
           <button
             type="button"
             onClick={onContact}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#283A2C] px-6 text-xs font-black uppercase tracking-[0.16em] text-[#F1EFEC] transition hover:bg-black sm:w-auto"
+            className="hidden min-h-12 items-center justify-center gap-2 rounded-full bg-[#283A2C] px-6 text-xs font-black uppercase tracking-[0.16em] text-[#F1EFEC] transition hover:bg-black md:inline-flex md:w-auto"
           >
             <MessageCircle size={16} />
             Customize
@@ -821,7 +890,7 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
         )}
       </div>
 
-      <div className="mt-8 grid min-w-0 items-stretch gap-8 sm:mt-10 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-7 grid min-w-0 grid-cols-2 items-start gap-2.5 md:mt-10 md:grid-cols-2 md:gap-8 xl:grid-cols-3">
         {sortedDays.map((day, index) => {
           const image = getDayHeroImage(day);
           const locations = getDayLocations(day);
@@ -840,35 +909,30 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
               whileHover={{ y: -6, transition: { duration: 0.22 } }}
               viewport={{ once: true, amount: 0.28 }}
               transition={{ delay: index * 0.04, duration: 0.4 }}
-              className="group relative mx-auto flex h-full w-full max-w-[27rem] min-w-0 pb-4 pt-8 text-[#283A2C] sm:pt-10 md:max-w-none md:min-h-[35rem]"
+              className="group relative mx-auto flex w-full min-w-0 pb-4 pt-7 text-[#283A2C] md:max-w-none md:pt-12"
             >
-              <div className="absolute left-1/2 top-0 z-10 h-9 w-24 -translate-x-1/2 rounded-t-[1.45rem] border-x-[7px] border-t-[7px] border-[#283A2C] shadow-[0_12px_28px_rgba(40,58,44,0.16)] transition duration-300 group-hover:-translate-y-1 group-hover:border-[#1b271e] sm:h-11 sm:w-28 sm:rounded-t-[1.65rem] sm:border-x-[9px] sm:border-t-[9px] sm:group-hover:-translate-y-1.5" />
-              <span className="absolute bottom-0 left-8 z-10 h-3.5 w-6 rounded-b-full bg-[#283A2C] shadow-[0_10px_18px_rgba(40,58,44,0.22)] transition duration-300 group-hover:bg-[#1b271e] sm:left-10 sm:h-4 sm:w-7" />
-              <span className="absolute bottom-0 right-8 z-10 h-3.5 w-6 rounded-b-full bg-[#283A2C] shadow-[0_10px_18px_rgba(40,58,44,0.22)] transition duration-300 group-hover:bg-[#1b271e] sm:right-10 sm:h-4 sm:w-7" />
+              <div className="absolute left-1/2 top-0 z-0 h-11 w-[48%] -translate-x-1/2 rounded-t-[1.1rem] border-x-[5px] border-t-[5px] border-[#7B5A00] transition duration-300 md:h-16 md:max-w-40 md:rounded-t-[1.8rem] md:border-x-[8px] md:border-t-[8px] md:group-hover:-translate-y-1.5" />
+              <span className="absolute bottom-0 left-[9%] z-0 h-5 w-4 rounded-b-full bg-[#D7BD8B] md:h-7 md:w-6" />
+              <span className="absolute bottom-0 right-[9%] z-0 h-5 w-4 rounded-b-full bg-[#D7BD8B] md:h-7 md:w-6" />
 
-              <div className="relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-[1.15rem] border-[1.5px] border-[#283A2C]/24 bg-[#FFFFFF] shadow-[0_24px_64px_rgba(40,58,44,0.12)] ring-1 ring-[#DADDC5]/80 transition duration-300 group-hover:border-[#283A2C] group-hover:ring-[#283A2C]/20 group-hover:shadow-[0_34px_86px_rgba(40,58,44,0.20)] sm:rounded-[1.35rem]">
-                <span className="pointer-events-none absolute bottom-6 left-5 top-24 z-10 hidden w-px bg-[#DADDC5]/70 sm:block" />
-                <span className="pointer-events-none absolute bottom-6 right-5 top-24 z-10 hidden w-px bg-[#DADDC5]/70 sm:block" />
-                <span className="absolute left-3 top-3 z-20 h-2.5 w-2.5 rounded-full bg-[#DADDC5] shadow-[inset_0_0_0_2px_#FFFFFF] sm:left-4 sm:top-4" />
-                <span className="absolute right-3 top-3 z-20 h-2.5 w-2.5 rounded-full bg-[#DADDC5] shadow-[inset_0_0_0_2px_#FFFFFF] sm:right-4 sm:top-4" />
-
-                <div className="relative bg-[linear-gradient(135deg,#DADDC5_0%,#F1EFEC_54%,#FFFFFF_100%)] px-4 pb-4 pt-12 sm:px-5 sm:pb-5">
-                  <span className="absolute left-4 top-4 rounded-full bg-[#283A2C] px-3.5 py-2 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#FFFFFF] shadow-[0_12px_28px_rgba(0,0,0,0.20)] sm:left-5 sm:top-5 sm:px-4 sm:text-[0.64rem] sm:tracking-[0.16em]">
-                    Day {dayNumber}
+              <div className="relative z-10 flex aspect-[554/691] min-w-0 w-full flex-col overflow-hidden rounded-b-[1rem] rounded-t-[2rem] border-[1.5px] border-[#283A2C]/24 bg-[linear-gradient(145deg,#42584A_0%,#283A2C_58%,#34493B_100%)] transition duration-300 md:rounded-b-[1.5rem] md:rounded-t-[3rem] md:group-hover:-translate-y-1">
+                <div className="relative bg-transparent px-2.5 pb-2 pt-8 md:px-6 md:pb-4 md:pt-14">
+                  <span className="absolute left-1/2 top-2.5 z-20 -translate-x-1/2 rounded-full border border-[#283A2C]/14 bg-[#F1EFEC] px-2.5 py-0.5 text-[0.4rem] font-black tracking-[0.12em] text-[#283A2C] md:top-5 md:px-4 md:py-1 md:text-[0.62rem]">
+                    Yogo
                   </span>
                   {hasCustomizeBadge && (
-                    <span className="absolute right-4 top-4 rounded-full border border-[#283A2C]/18 bg-[#F1EFEC] px-2.5 py-1.5 text-[0.56rem] font-black uppercase tracking-[0.12em] text-[#283A2C] shadow-[0_12px_26px_rgba(0,0,0,0.10)] sm:right-5 sm:top-5 sm:px-3 sm:text-[0.58rem] sm:tracking-[0.16em]">
+                    <span className="hidden">
                       <span className="sm:hidden">Custom</span>
                       <span className="hidden sm:inline">Customizable</span>
                     </span>
                   )}
 
-                  <div className="mx-auto mt-3 grid aspect-[4/3] w-full max-w-[18rem] place-items-center overflow-hidden rounded-xl border-[1.5px] border-[#283A2C]/16 bg-[#FFFFFF] p-2 shadow-[inset_0_0_0_1px_rgba(218,221,197,0.72),0_16px_34px_rgba(40,58,44,0.12)] sm:h-44 sm:max-w-[17rem]">
+                  <div className="mx-auto grid aspect-[1.5/1] w-full place-items-center overflow-hidden rounded-[0.9rem] border-[2px] border-[#F1EFEC] bg-[#FFFFFF] md:rounded-[1.6rem] md:border-[3px]">
                     {image ? (
                       <img
                         src={image}
                         alt={title}
-                        className="h-full w-full rounded-lg object-contain transition duration-500"
+                        className="h-full w-full rounded-[0.65rem] object-cover transition duration-500 md:rounded-[1.35rem]"
                       />
                     ) : (
                       <div className="grid h-full w-full place-items-center rounded-lg bg-[#DADDC5] text-[#283A2C]">
@@ -883,15 +947,15 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
                   </div>
                 </div>
 
-                <div className="relative flex min-w-0 flex-1 flex-col p-4 sm:p-6">
-                  <h3 className="line-clamp-2 break-words font-display text-[1.7rem] font-semibold leading-tight text-[#283A2C] sm:min-h-[3.25rem] sm:text-2xl">
+                <div className="relative flex min-w-0 flex-1 flex-col px-3.5 pb-4 pt-1.5 text-center md:px-8 md:pb-8 md:pt-2">
+                  <h3 className="line-clamp-2 break-words text-[0.72rem] font-black leading-tight tracking-[0.06em] text-[#FFFFFF] md:text-xl md:tracking-[0.08em]">
                     {title}
                   </h3>
-                  <p className="mt-3 line-clamp-4 break-words text-sm leading-7 text-[#283A2C]/64 sm:line-clamp-3 sm:min-h-[5.25rem]">
+                  <p className="mx-auto mt-1.5 line-clamp-6 max-w-[13rem] break-words text-[0.5rem] leading-[1.55] tracking-[0.08em] text-[#F1EFEC]/90 md:mt-3 md:max-w-[24rem] md:text-sm md:leading-7 md:tracking-[0.1em]">
                     {description}
                   </p>
 
-                  <div className="mt-auto grid gap-4 border-t border-[#DADDC5] pt-5">
+                  <div className="hidden">
                     <div>
                       <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-[#283A2C]/46">
                         Locations
@@ -1027,6 +1091,7 @@ export default function Itineraries({
   tourPlanDetail = false,
   themeHero = false,
 }) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeStop, setActiveStop] = useState(null);
   const [days, setDays] = useState([]);
@@ -1167,7 +1232,13 @@ export default function Itineraries({
   }, [routeStops, selectedItinerary?._id]);
 
   function handleThemeSelect(theme) {
-    if (lockedTheme) return;
+    if (!theme?.slug || theme.slug === selectedThemeSlug) return;
+
+    if (lockedTheme) {
+      navigate(`/tour-plans/${theme.slug}`);
+      return;
+    }
+
     setSelectedThemeSlug(theme.slug);
     if (syncUrl) {
       setSearchParams({ theme: theme.slug });
@@ -1203,12 +1274,12 @@ export default function Itineraries({
   const mapPanel = (
     <Suspense
       fallback={
-        <div className="h-[260px] w-full max-w-full animate-pulse rounded-xl border border-[#283A2C]/10 bg-[#DADDC5]/70 sm:h-[28rem] md:h-[30rem] xl:h-[33rem]" />
+        <div className="h-[260px] w-full max-w-full animate-pulse rounded-xl border border-[#283A2C]/10 bg-[#DADDC5]/70 md:h-[30rem] xl:h-[33rem]" />
       }
     >
       <TravelThemeRouteMap
         activeStop={activeStop}
-        containerClassName="relative h-[290px] w-full max-w-full overflow-hidden rounded-2xl border border-[#283A2C]/10 bg-[#283A2C] shadow-[0_20px_54px_rgba(40,58,44,0.16)] sm:h-[28rem] sm:rounded-xl md:h-[30rem] md:shadow-[0_28px_90px_rgba(40,58,44,0.20)] xl:h-[33rem]"
+        containerClassName="relative h-[290px] w-full max-w-full overflow-hidden rounded-2xl border border-[#283A2C]/10 bg-[#283A2C] shadow-[0_20px_54px_rgba(40,58,44,0.16)] md:h-[30rem] md:rounded-xl md:shadow-[0_28px_90px_rgba(40,58,44,0.20)] xl:h-[33rem]"
         daysStatus={daysStatus}
         fitRouteToBounds={false}
         fitRouteToBoundsOnMobile
@@ -1250,10 +1321,10 @@ export default function Itineraries({
 
   return (
     <section
-      className={`relative w-full max-w-full overflow-x-hidden bg-[#F1EFEC] px-4 text-[#283A2C] sm:px-6 lg:px-8 ${
+      className={`relative w-full max-w-full overflow-x-hidden bg-[#F1EFEC] px-4 text-[#283A2C] md:px-6 lg:px-8 ${
         embedded
-          ? 'py-16 lg:py-24'
-          : 'min-h-screen pb-16 pt-28 sm:pt-32 lg:pb-24'
+          ? 'pb-[calc(9rem+env(safe-area-inset-bottom))] pt-16 md:py-16 lg:py-24'
+          : 'min-h-screen pb-[calc(9rem+env(safe-area-inset-bottom))] pt-28 md:pb-16 md:pt-32 lg:pb-24'
       }`}
     >
       {!embedded && <div className="absolute inset-x-0 top-0 h-1 bg-[#283A2C]" />}
@@ -1267,7 +1338,7 @@ export default function Itineraries({
             showHeader ? '' : 'sr-only'
           } ${
             themeHero
-              ? 'mx-auto min-h-[15rem] max-w-6xl rounded-lg px-5 py-10 text-[#FFFFFF] shadow-[0_24px_74px_rgba(40,58,44,0.20)] sm:min-h-[18rem] sm:px-8 lg:flex lg:items-center lg:justify-center'
+              ? 'mx-auto min-h-[15rem] max-w-6xl rounded-lg px-5 py-10 text-[#FFFFFF] shadow-none md:min-h-[18rem] md:px-8 lg:flex lg:items-center lg:justify-center'
               : 'mx-auto max-w-3xl'
           }`}
         >
@@ -1300,19 +1371,19 @@ export default function Itineraries({
               Custom Curations
             </p>
             <h1
-              className={`mt-2 text-4xl font-black uppercase leading-[1.05] tracking-tight sm:mt-3 sm:text-5xl sm:leading-tight ${
+              className={`mt-2 text-[clamp(2rem,9vw,2.625rem)] font-black uppercase leading-[1.05] tracking-tight md:mt-3 md:text-5xl md:leading-tight ${
                 themeHero ? 'text-[#FFFFFF]' : 'text-[#283A2C]'
               }`}
             >
               Interactive Travel Themes
             </h1>
             <div
-              className={`mx-auto mt-3 h-px w-12 sm:mt-4 ${
+              className={`mx-auto mt-3 h-px w-12 md:mt-4 ${
                 themeHero ? 'bg-[#DADDC5]' : 'bg-[#283A2C]'
               }`}
             />
             <p
-              className={`mx-auto mt-3 max-w-2xl text-pretty text-sm leading-6 sm:mt-4 sm:text-base sm:leading-7 ${
+              className={`mx-auto mt-3 max-w-2xl text-pretty text-sm leading-6 md:mt-4 md:text-base md:leading-7 ${
                 themeHero ? 'text-[#F1EFEC]/84' : 'text-[#283A2C]/62'
               }`}
             >
@@ -1372,9 +1443,9 @@ export default function Itineraries({
                 <div className="mt-9 hidden w-full max-w-full gap-3 pb-3 md:flex md:flex-wrap md:justify-center md:overflow-visible">
                   {themes.map((theme) => {
                     const isActive = theme.slug === selectedThemeSlug;
-                    const themeButtonClassName = `shrink-0 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.16em] transition duration-300 ease-out ${
+                    const themeButtonClassName = `shrink-0 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.16em] shadow-none transition duration-300 ease-out ${
                       isActive
-                        ? 'border-[#283A2C] bg-[#283A2C] text-[#DADDC5] shadow-[0_14px_34px_rgba(40,58,44,0.18)]'
+                        ? 'border-[#283A2C] bg-[#283A2C] text-[#DADDC5]'
                         : 'border-[#283A2C] bg-[#DADDC5] text-[#283A2C] hover:bg-[#283A2C] hover:text-[#DADDC5]'
                     }`;
 
@@ -1444,7 +1515,7 @@ export default function Itineraries({
                   className="order-2 min-w-0 max-w-full overflow-hidden xl:order-2"
                 >
                   {mapPanel}
-                  {!tourPlanDetail && mobileDetailsPanel}
+                  {mobileDetailsPanel}
                 </motion.div>
               </AnimatePresence>
               {!tourPlanDetail && (
