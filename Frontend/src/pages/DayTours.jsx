@@ -1,13 +1,27 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   HelpCircle,
+  Landmark,
+  Leaf,
   Loader2,
+  MapPin,
   MapPinned,
   MessageCircle,
+  Mountain,
   Navigation,
+  Palmtree,
   Sparkles,
+  Waves,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { fetchDayTours } from '../api/dayTours';
@@ -51,6 +65,285 @@ function buildLocationGroups(dayTours) {
   });
 
   return Array.from(groups.values());
+}
+
+function getLocationDialIcon(location) {
+  const label = `${location?.name || ''} ${location?.slug || ''}`.toLowerCase();
+
+  if (/(beach|coast|bay|lagoon|sea|ocean)/.test(label)) return Waves;
+  if (/(fort|temple|church|palace|heritage|city)/.test(label)) return Landmark;
+  if (/(mountain|rock|hill|peak|adventure)/.test(label)) return Mountain;
+  if (/(forest|garden|park|nature|wildlife)/.test(label)) return Leaf;
+  if (/(island|tropical|palm)/.test(label)) return Palmtree;
+
+  return MapPin;
+}
+
+function MobileLocationDial({
+  locationGroups,
+  onSelect,
+  selectedLocationId,
+}) {
+  const railRef = useRef(null);
+  const itemRefs = useRef(new Map());
+  const frameRef = useRef(null);
+  const scrollTimerRef = useRef(null);
+  const positionedLoopRef = useRef('');
+  const groupById = useMemo(
+    () =>
+      new Map(
+        locationGroups.map((group) => [getId(group.location), group]),
+      ),
+    [locationGroups],
+  );
+  const loopedGroups = useMemo(() => {
+    const copies = locationGroups.length > 1 ? 3 : 1;
+
+    return Array.from({ length: copies }, (_, copyIndex) =>
+      locationGroups.map((group) => ({ copyIndex, group })),
+    ).flat();
+  }, [locationGroups]);
+  const loopSignature = locationGroups
+    .map((group) => getId(group.location))
+    .join('|');
+
+  const updateDialPositions = useCallback(() => {
+    window.cancelAnimationFrame(frameRef.current);
+    frameRef.current = window.requestAnimationFrame(() => {
+      const rail = railRef.current;
+      if (!rail) return;
+
+      const railCenter = rail.clientWidth / 2;
+      const arcRadius = rail.clientWidth / 2;
+
+      itemRefs.current.forEach((item) => {
+        const itemCenter =
+          item.offsetLeft + item.offsetWidth / 2 - rail.scrollLeft;
+        const signedDistance = Math.min(
+          Math.max((itemCenter - railCenter) / arcRadius, -1),
+          1,
+        );
+        const distance = Math.abs(signedDistance);
+        const y = (1 - distance * distance) * 24;
+        const rotation = signedDistance * -4;
+
+        item.style.transform = `translateY(${y}px) rotate(${rotation}deg)`;
+      });
+    });
+  }, []);
+
+  const keepLoopCentered = useCallback(() => {
+    const rail = railRef.current;
+    const anchorGroup = locationGroups[0];
+
+    if (!rail || locationGroups.length < 2 || !anchorGroup) return;
+
+    const anchorId = getId(anchorGroup.location);
+    const middleAnchor = itemRefs.current.get(`1-${anchorId}`);
+    const trailingAnchor = itemRefs.current.get(`2-${anchorId}`);
+
+    if (!middleAnchor || !trailingAnchor) return;
+
+    const cycleWidth = trailingAnchor.offsetLeft - middleAnchor.offsetLeft;
+    const viewportCenter = rail.scrollLeft + rail.clientWidth / 2;
+
+    if (viewportCenter < middleAnchor.offsetLeft) {
+      rail.scrollLeft += cycleWidth;
+    } else if (viewportCenter >= trailingAnchor.offsetLeft) {
+      rail.scrollLeft -= cycleWidth;
+    }
+  }, [locationGroups]);
+
+  useEffect(() => {
+    const rail = railRef.current;
+
+    if (!rail || !selectedLocationId) {
+      updateDialPositions();
+      return;
+    }
+
+    const matchingItems = [...itemRefs.current.values()].filter(
+      (item) => item.dataset.locationId === selectedLocationId,
+    );
+    const viewportCenter = rail.scrollLeft + rail.clientWidth / 2;
+    const shouldPositionMiddleCopy =
+      locationGroups.length > 1 &&
+      positionedLoopRef.current !== loopSignature;
+    const selectedItem = shouldPositionMiddleCopy
+      ? itemRefs.current.get(`1-${selectedLocationId}`)
+      : matchingItems.reduce((closest, item) => {
+          if (!closest) return item;
+
+          const itemDistance = Math.abs(
+            item.offsetLeft + item.offsetWidth / 2 - viewportCenter,
+          );
+          const closestDistance = Math.abs(
+            closest.offsetLeft + closest.offsetWidth / 2 - viewportCenter,
+          );
+
+          return itemDistance < closestDistance ? item : closest;
+        }, null);
+
+    if (selectedItem) {
+      rail.scrollTo({
+        behavior: shouldPositionMiddleCopy ? 'auto' : 'smooth',
+        left:
+          selectedItem.offsetLeft -
+          (rail.clientWidth - selectedItem.offsetWidth) / 2,
+      });
+    }
+
+    positionedLoopRef.current = loopSignature;
+    updateDialPositions();
+  }, [
+    locationGroups.length,
+    loopSignature,
+    selectedLocationId,
+    updateDialPositions,
+  ]);
+
+  useEffect(() => {
+    updateDialPositions();
+    window.addEventListener('resize', updateDialPositions);
+
+    return () => {
+      window.removeEventListener('resize', updateDialPositions);
+      window.cancelAnimationFrame(frameRef.current);
+      window.clearTimeout(scrollTimerRef.current);
+    };
+  }, [updateDialPositions]);
+
+  function handleRailScroll() {
+    keepLoopCentered();
+    updateDialPositions();
+
+    window.clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = window.setTimeout(() => {
+      const rail = railRef.current;
+      if (!rail) return;
+
+      const railBounds = rail.getBoundingClientRect();
+      const center = railBounds.left + railBounds.width / 2;
+      let closestGroup = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      itemRefs.current.forEach((item) => {
+        const group = groupById.get(item.dataset.locationId);
+        if (!group) return;
+
+        const itemBounds = item.getBoundingClientRect();
+        const distance = Math.abs(
+          itemBounds.left + itemBounds.width / 2 - center,
+        );
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestGroup = group;
+        }
+      });
+
+      if (
+        closestGroup &&
+        getId(closestGroup.location) !== selectedLocationId
+      ) {
+        onSelect(closestGroup);
+      }
+    }, 140);
+  }
+
+  return (
+    <div className="mt-8 md:hidden">
+      <div className="text-center">
+        <h2 className="text-xl font-bold leading-none text-[#283A2C]">
+          Select Your Location
+        </h2>
+        <span className="mx-auto mt-1 block h-0.5 w-16 bg-[#283A2C]" />
+      </div>
+
+      <div className="relative left-1/2 -mt-1 h-[6.75rem] w-[min(100vw,26.875rem)] -translate-x-1/2 overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-full">
+          <svg
+            aria-hidden="true"
+            className="h-full w-full"
+            fill="none"
+            preserveAspectRatio="none"
+            viewBox="0 0 420 108"
+          >
+            <path d="M-70 -34 Q210 78 490 -34" stroke="#283A2C" strokeWidth="2.25" />
+            <path d="M-70 -30 Q210 82 490 -30" stroke="#283A2C" strokeOpacity="0.58" strokeWidth="1.25" />
+            <path d="M-70 40 Q210 152 490 40" stroke="#283A2C" strokeOpacity="0.58" strokeWidth="1.25" />
+            <path d="M-70 44 Q210 156 490 44" stroke="#283A2C" strokeOpacity="0.86" strokeWidth="2.25" />
+            <path d="M203 18 L217 18 L210 30 Z" fill="#283A2C" stroke="#F1EFEC" strokeLinejoin="round" strokeWidth="1.5" />
+            <path d="M203 104 L217 104 L210 92 Z" fill="#283A2C" stroke="#F1EFEC" strokeLinejoin="round" strokeWidth="1.5" />
+          </svg>
+        </div>
+
+        <div className="pointer-events-none absolute -left-4 top-[3.4rem] z-20 text-[#283A2C]/40">
+          <Leaf size={30} strokeWidth={1.8} />
+        </div>
+        <div className="pointer-events-none absolute -right-4 top-[3.4rem] z-20 text-[#283A2C]/40">
+          <Landmark size={30} strokeWidth={1.8} />
+        </div>
+
+        <div
+          ref={railRef}
+          onScroll={handleRailScroll}
+          className="absolute inset-x-0 bottom-1 top-0 z-10 flex touch-pan-x snap-x snap-mandatory items-start gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain px-[calc(50%-2.25rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {loopedGroups.map(({ copyIndex, group }) => {
+            const locationId = getId(group.location);
+            const isActive = locationId === selectedLocationId;
+            const Icon = getLocationDialIcon(group.location);
+            const instanceKey = `${copyIndex}-${locationId}`;
+            const setItemRef = (node) => {
+              if (node) itemRefs.current.set(instanceKey, node);
+              else itemRefs.current.delete(instanceKey);
+            };
+
+            return (
+              <div
+                key={instanceKey}
+                ref={setItemRef}
+                data-location-id={locationId}
+                className="w-[4.5rem] shrink-0 snap-center transition-transform duration-150 ease-out"
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(group)}
+                  className="flex w-[4.5rem] flex-col items-center transition duration-300"
+                >
+                  <motion.span
+                    animate={{ opacity: isActive ? 1 : 0.72 }}
+                    initial={false}
+                    className="relative flex flex-col items-center"
+                  >
+                    <motion.span
+                      animate={{ scale: isActive ? 1 : 0.92 }}
+                      initial={false}
+                      className={`relative z-10 grid h-11 w-11 place-items-center rounded-full border transition duration-300 ${
+                        isActive
+                          ? 'border-[#283A2C] bg-[#283A2C] text-[#FFFFFF] shadow-[0_8px_20px_rgba(40,58,44,0.25)]'
+                          : 'border-transparent bg-transparent text-[#283A2C]/60'
+                      }`}
+                    >
+                      <Icon size={isActive ? 24 : 21} strokeWidth={2} />
+                    </motion.span>
+                    <span
+                      className={`relative z-10 mt-0.5 line-clamp-2 min-h-[1.15rem] max-w-[4.5rem] text-center text-[0.54rem] font-bold uppercase leading-[1.08] tracking-[0.035em] ${
+                        isActive ? 'text-[#283A2C]' : 'text-[#283A2C]/65'
+                      }`}
+                    >
+                      {group.location.name}
+                    </span>
+                  </motion.span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function PlacesPanel({ activePlace, onSelect, places = [] }) {
@@ -342,9 +635,9 @@ export default function DayTours() {
 
   return (
     <section className="relative w-full max-w-full overflow-x-hidden bg-[#F1EFEC] px-4 pb-16 pt-28 text-[#283A2C] sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[27rem] bg-[#283A2C]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[27rem] bg-[radial-gradient(circle_at_50%_0%,rgba(218,221,197,0.18),transparent_28rem),linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(40,58,44,0)_72%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-[27rem] h-28 bg-gradient-to-b from-[#283A2C] to-[#F1EFEC]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[23rem] bg-[#283A2C] md:h-[27rem]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[23rem] bg-[radial-gradient(circle_at_50%_0%,rgba(218,221,197,0.18),transparent_28rem),linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(40,58,44,0)_72%)] md:h-[27rem]" />
+      <div className="pointer-events-none absolute inset-x-0 top-[27rem] hidden h-28 bg-gradient-to-b from-[#283A2C] to-[#F1EFEC] md:block" />
       {selectedTour?.heroImage && (
         <AnimatePresence mode="wait">
           <motion.div
@@ -370,7 +663,7 @@ export default function DayTours() {
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
-          className="relative isolate flex min-h-[16rem] w-full max-w-full flex-col justify-end gap-5 overflow-hidden rounded-[1.5rem] border border-[#FFFFFF]/14 bg-[#1f3024] px-5 py-8 text-[#FFFFFF] shadow-[0_28px_84px_rgba(0,0,0,0.22)] sm:min-h-[18rem] sm:px-8 lg:min-h-[26rem] lg:flex-row lg:items-end lg:justify-between"
+          className="relative isolate flex min-h-[16rem] w-full max-w-full flex-col justify-end gap-5 overflow-hidden rounded-[1.5rem] border border-[#FFFFFF]/14 bg-[#1f3024] px-5 py-8 text-[#FFFFFF] shadow-none sm:min-h-[18rem] sm:px-8 md:shadow-[0_28px_84px_rgba(0,0,0,0.22)] lg:min-h-[26rem] lg:flex-row lg:items-end lg:justify-between"
         >
           {selectedTour?.heroImage && (
             <>
@@ -457,7 +750,13 @@ export default function DayTours() {
 
         {locationGroups.length > 0 && (
           <>
-            <div className="mt-10 flex w-full max-w-full gap-3 overflow-x-auto pb-3 md:flex-wrap md:justify-center md:overflow-visible">
+            <MobileLocationDial
+              locationGroups={locationGroups}
+              onSelect={handleLocationSelect}
+              selectedLocationId={selectedLocationId}
+            />
+
+            <div className="mt-6 hidden w-full max-w-full flex-wrap items-center justify-center gap-3 px-0 pb-1.5 md:flex">
               {locationGroups.map((group) => {
                 const isActive = getId(group.location) === selectedLocationId;
 
@@ -466,20 +765,22 @@ export default function DayTours() {
                     key={getId(group.location)}
                     type="button"
                     onClick={() => handleLocationSelect(group)}
-                    className={`max-w-[82vw] shrink-0 overflow-hidden whitespace-normal break-words rounded-full border px-5 py-3 text-sm font-black uppercase tracking-[0.16em] transition ${
+                    className={`min-w-[6.5rem] max-w-full overflow-hidden rounded-full border px-3.5 py-2 text-[0.68rem] font-bold transition duration-300 md:min-w-0 md:px-5 md:py-3 md:text-sm md:font-black md:uppercase md:tracking-[0.16em] ${
                       isActive
-                        ? 'border-[#283A2C] bg-[#283A2C] text-[#DADDC5] shadow-[0_14px_34px_rgba(40,58,44,0.18)]'
-                        : 'border-[#283A2C] bg-[#DADDC5] text-[#283A2C] transition duration-300 ease-out hover:bg-[#283A2C] hover:text-[#DADDC5]'
+                        ? 'border-[#283A2C] bg-[#283A2C] text-[#FFFFFF] shadow-[0_8px_22px_rgba(40,58,44,0.28)]'
+                        : 'border-[#283A2C]/45 bg-[#FFFFFF] text-[#283A2C] shadow-[0_4px_12px_rgba(40,58,44,0.06)] hover:border-[#283A2C] hover:bg-[#DADDC5]'
                     }`}
                   >
-                    {group.location.name}
+                    <span className="line-clamp-1 break-words">
+                      {group.location.name}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
             {selectedGroup?.tours?.length > 1 && (
-              <div className="mt-4 flex w-full max-w-full gap-3 overflow-x-auto pb-3 md:flex-wrap md:justify-center md:overflow-visible">
+              <div className="mt-3 flex w-full max-w-full flex-wrap items-center justify-center gap-2.5 px-1.5 pb-1.5 md:gap-3 md:px-0">
                 {selectedGroup.tours.map((tour) => {
                   const isActive = tour._id === selectedTourId;
 
@@ -491,13 +792,15 @@ export default function DayTours() {
                         setSelectedTourId(tour._id);
                         setActivePlace(null);
                       }}
-                      className={`max-w-[82vw] shrink-0 rounded-sm border px-4 py-3 text-xs font-black uppercase tracking-[0.14em] transition ${
+                      className={`min-w-[6.5rem] max-w-full rounded-full border px-3.5 py-2 text-[0.68rem] font-bold transition duration-300 md:min-w-0 md:px-4 md:py-3 md:text-xs md:font-black md:uppercase md:tracking-[0.14em] ${
                         isActive
-                          ? 'border-[#283A2C] bg-[#283A2C] text-[#DADDC5]'
-                          : 'border-[#283A2C] bg-[#DADDC5] text-[#283A2C] transition duration-300 ease-out hover:bg-[#283A2C] hover:text-[#DADDC5]'
+                          ? 'border-[#283A2C] bg-[#283A2C] text-[#FFFFFF] shadow-[0_8px_22px_rgba(40,58,44,0.28)]'
+                          : 'border-[#283A2C]/45 bg-[#FFFFFF] text-[#283A2C] shadow-[0_4px_12px_rgba(40,58,44,0.06)] hover:border-[#283A2C] hover:bg-[#DADDC5]'
                       }`}
                     >
-                      {tour.title}
+                      <span className="line-clamp-1 break-words">
+                        {tour.title}
+                      </span>
                     </button>
                   );
                 })}

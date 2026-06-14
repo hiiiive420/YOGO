@@ -776,7 +776,13 @@ function ItineraryDetailsPanel({
   );
 }
 
-function MobileItinerarySummary({ itinerary, theme, viewTourHref }) {
+function MobileItinerarySummary({
+  itinerary,
+  onContact,
+  showContactAction = false,
+  theme,
+  viewTourHref,
+}) {
   if (!itinerary) return null;
 
   const days = Number(itinerary.totalDays || 0);
@@ -815,12 +821,23 @@ function MobileItinerarySummary({ itinerary, theme, viewTourHref }) {
         </p>
       )}
 
-      <Link
-        to={viewTourHref}
-        className="absolute left-[31.9%] top-[70.94%] inline-flex h-[18.97%] w-[36.2%] items-center justify-center rounded-[clamp(0.75rem,3.36vw,0.9rem)] bg-[#283A2C] px-3 font-[Arial] text-[clamp(0.66rem,2.64vw,0.72rem)] font-bold text-[#F1EFEC] shadow-[0_4px_24px_3px_rgba(0,0,0,0.30)] transition active:scale-[0.98]"
-      >
-        Explore More
-      </Link>
+      {showContactAction ? (
+        <button
+          type="button"
+          onClick={onContact}
+          className="absolute left-[31.9%] top-[70.94%] inline-flex h-[18.97%] w-[36.2%] items-center justify-center gap-1.5 rounded-[clamp(0.75rem,3.36vw,0.9rem)] bg-[#283A2C] px-3 font-[Arial] text-[clamp(0.66rem,2.64vw,0.72rem)] font-bold text-[#F1EFEC] shadow-[0_4px_24px_3px_rgba(0,0,0,0.30)] transition active:scale-[0.98]"
+        >
+          <MessageCircle size={13} />
+          Contact Us
+        </button>
+      ) : (
+        <Link
+          to={viewTourHref}
+          className="absolute left-[31.9%] top-[70.94%] inline-flex h-[18.97%] w-[36.2%] items-center justify-center rounded-[clamp(0.75rem,3.36vw,0.9rem)] bg-[#283A2C] px-3 font-[Arial] text-[clamp(0.66rem,2.64vw,0.72rem)] font-bold text-[#F1EFEC] shadow-[0_4px_24px_3px_rgba(0,0,0,0.30)] transition active:scale-[0.98]"
+        >
+          Explore More
+        </Link>
+      )}
     </motion.article>
   );
 }
@@ -895,6 +912,8 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
           const image = getDayHeroImage(day);
           const locations = getDayLocations(day);
           const dayNumber = day.dayNumber || index + 1;
+          const isCenteredLastCard =
+            sortedDays.length % 2 === 1 && index === sortedDays.length - 1;
           const title = day.title || `Day ${dayNumber}`;
           const description =
             day.description || 'Daily activity details will be shared soon.';
@@ -909,7 +928,11 @@ function DayActivityGrid({ days = [], daysStatus, itinerary, onContact }) {
               whileHover={{ y: -6, transition: { duration: 0.22 } }}
               viewport={{ once: true, amount: 0.28 }}
               transition={{ delay: index * 0.04, duration: 0.4 }}
-              className="group relative mx-auto flex w-full min-w-0 pb-4 pt-7 text-[#283A2C] md:max-w-none md:pt-12"
+              className={`group relative mx-auto flex min-w-0 pb-4 pt-7 text-[#283A2C] md:max-w-none md:pt-12 ${
+                isCenteredLastCard
+                  ? 'col-span-2 w-[calc(50%_-_0.3125rem)] md:col-span-1 md:w-full'
+                  : 'w-full'
+              }`}
             >
               <div className="absolute left-1/2 top-0 z-0 h-11 w-[48%] -translate-x-1/2 rounded-t-[1.1rem] border-x-[5px] border-t-[5px] border-[#7B5A00] transition duration-300 md:h-16 md:max-w-40 md:rounded-t-[1.8rem] md:border-x-[8px] md:border-t-[8px] md:group-hover:-translate-y-1.5" />
               <span className="absolute bottom-0 left-[9%] z-0 h-5 w-4 rounded-b-full bg-[#D7BD8B] md:h-7 md:w-6" />
@@ -1285,6 +1308,7 @@ export default function Itineraries({
         fitRouteToBoundsOnMobile
         onStopSelect={setActiveStop}
         pinSize="compact"
+        showMapMeta={!embedded}
         stops={routeStops}
       />
     </Suspense>
@@ -1308,6 +1332,8 @@ export default function Itineraries({
   const mobileDetailsPanel = (
     <MobileItinerarySummary
       itinerary={selectedItinerary}
+      onContact={openSelectedItineraryContact}
+      showContactAction={lockedTheme}
       theme={selectedTheme}
       viewTourHref={
         lockedTheme && selectedItinerary?.slug
@@ -1323,7 +1349,7 @@ export default function Itineraries({
     <section
       className={`relative w-full max-w-full overflow-x-hidden bg-[#F1EFEC] px-4 text-[#283A2C] md:px-6 lg:px-8 ${
         embedded
-          ? 'pb-[calc(9rem+env(safe-area-inset-bottom))] pt-16 md:py-16 lg:py-24'
+          ? 'pb-6 pt-7 md:py-16 lg:py-24'
           : 'min-h-screen pb-[calc(9rem+env(safe-area-inset-bottom))] pt-28 md:pb-16 md:pt-32 lg:pb-24'
       }`}
     >

@@ -199,6 +199,7 @@ export default function TravelThemeRouteMap({
   fitRouteToBoundsOnMobile = false,
   onStopSelect,
   pinSize = 'default',
+  showMapMeta = true,
   stops = [],
 }) {
   const isMobileMap = useIsMobileMap();
@@ -226,7 +227,6 @@ export default function TravelThemeRouteMap({
 
   return (
     <div
-      data-mobile-map
       className={`${containerClassName || defaultContainerClassName} min-w-0`}
     >
       <MapContainer
@@ -366,28 +366,30 @@ export default function TravelThemeRouteMap({
         })}
       </MapContainer>
 
-      <motion.div
-        key={`${routeStops.length}-${activeStop?.id || 'idle'}`}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28 }}
-        className="pointer-events-none absolute bottom-3 left-3 right-3 z-[500] flex max-w-full flex-wrap gap-1.5 sm:bottom-4 sm:left-4 sm:right-4 sm:gap-2"
-      >
-        <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-black/76 px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-pearl backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.16em]">
-          <Route size={15} className="text-champagne" />
-          {daysStatus === 'loading' ? 'Loading route' : `${routeStops.length} stops`}
-        </div>
-        <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-black/76 px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-pearl backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.16em]">
-          <CircleDot size={15} className="text-champagne" />
-          {maxDay > 0 ? `${maxDay} days` : 'No days'}
-        </div>
-        {activeStop && (
-          <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-pearl px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-obsidian sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.16em]">
-            <MapPin size={15} />
-            Day {activeStop.dayNumber}
+      {showMapMeta && (
+        <motion.div
+          key={`${routeStops.length}-${activeStop?.id || 'idle'}`}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28 }}
+          className="pointer-events-none absolute right-3 top-3 z-[500] flex max-w-[calc(100%_-_4.5rem)] flex-col items-end gap-1.5 md:bottom-4 md:left-4 md:right-4 md:top-auto md:max-w-full md:flex-row md:flex-wrap md:items-stretch md:gap-2"
+        >
+          <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-black/76 px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-pearl backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.16em]">
+            <Route size={15} className="text-champagne" />
+            {daysStatus === 'loading' ? 'Loading route' : `${routeStops.length} stops`}
           </div>
-        )}
-      </motion.div>
+          <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-black/76 px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-pearl backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.16em]">
+            <CircleDot size={15} className="text-champagne" />
+            {maxDay > 0 ? `${maxDay} days` : 'No days'}
+          </div>
+          {activeStop && (
+            <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-pearl px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-obsidian sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.16em]">
+              <MapPin size={15} />
+              Day {activeStop.dayNumber}
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }

@@ -373,7 +373,7 @@ export default function CinematicSriLankaMap({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.45 }}
-              className="pointer-events-none absolute bottom-4 left-4 right-4 z-[500] flex flex-wrap gap-3"
+              className="pointer-events-none absolute right-3 top-3 z-[500] flex max-w-[calc(100%_-_4.5rem)] flex-col items-end gap-1.5 md:bottom-4 md:left-4 md:right-4 md:top-auto md:max-w-full md:flex-row md:flex-wrap md:items-stretch md:gap-3"
             >
               <div className="inline-flex items-center gap-2 rounded-full bg-black/72 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pearl backdrop-blur-md">
                 <MapPin size={15} className="text-champagne" />

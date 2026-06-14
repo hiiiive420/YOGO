@@ -313,6 +313,47 @@ function MobileHomeHero({
   const previousSlide =
     heroSlides[(activeSlideIndex - 1 + heroSlides.length) % heroSlides.length];
   const nextSlide = heroSlides[(activeSlideIndex + 1) % heroSlides.length];
+  const centeredDots = useMemo(() => {
+    const slideCount = heroSlides.length;
+    const activeIndex = activeSlideIndex % slideCount;
+    const visibleDotCount = Math.min(slideCount, 7);
+    const centeredDotCount =
+      visibleDotCount > 1 && visibleDotCount % 2 === 0
+        ? visibleDotCount - 1
+        : visibleDotCount;
+    const sideDotCount = Math.floor(centeredDotCount / 2);
+
+    return Array.from({ length: centeredDotCount }, (_, position) => {
+      const offset = position - sideDotCount;
+      const index = (activeIndex + offset + slideCount) % slideCount;
+
+      return {
+        distance: Math.abs(offset),
+        index,
+        slide: heroSlides[index],
+      };
+    });
+  }, [activeSlideIndex, heroSlides]);
+
+  function getDotStyle(distance) {
+    const size = distance === 0 ? 14 : distance === 1 ? 8 : distance === 2 ? 6 : 4;
+    const opacity =
+      distance === 0 ? 1 : distance === 1 ? 0.8 : distance === 2 ? 0.6 : 0.4;
+
+    return {
+      width: `${size}px`,
+      height: `${size}px`,
+      opacity,
+      transform:
+        distance === 0 ? 'translateY(-2px) scale(1.08)' : 'translateY(0) scale(1)',
+      boxShadow:
+        distance === 0
+          ? '0 0 0 1px rgba(255,255,255,0.38), 0 0 12px rgba(218,221,197,0.72)'
+          : 'none',
+      transition:
+        'width 360ms ease, height 360ms ease, transform 360ms ease, opacity 360ms ease, box-shadow 360ms ease',
+    };
+  }
 
   function handleDragEnd(_, info) {
     if (info.offset.x < -55 || info.velocity.x < -450) {
@@ -331,7 +372,7 @@ function MobileHomeHero({
         <div className="mobile-home-hero-frame relative w-full">
           {heroSlides.length > 1 && (
             <>
-              <div className="pointer-events-none absolute left-[2.16%] top-0 z-0 h-[96.28%] w-[95.76%] overflow-hidden border-x border-t border-[#DADDC5]/75 bg-[#283A2C] opacity-45">
+              <div className="pointer-events-none absolute left-[2.16%] top-0 z-0 h-[96.28%] w-[95.76%] overflow-hidden border-x border-t border-[#DADDC5]/75 bg-[#283A2C]">
                 {previousSlide.image ? (
                   <img
                     src={previousSlide.image}
@@ -343,7 +384,7 @@ function MobileHomeHero({
                 )}
               </div>
 
-              <div className="pointer-events-none absolute left-[4.48%] top-[1.47%] z-10 h-[96.28%] w-[91.04%] overflow-hidden border-x border-t border-[#DADDC5]/80 bg-[#283A2C] opacity-[0.58]">
+              <div className="pointer-events-none absolute left-[4.48%] top-[1.47%] z-10 h-[96.28%] w-[91.04%] overflow-hidden border-x border-t border-[#DADDC5]/80 bg-[#283A2C]">
                 {nextSlide.image ? (
                   <img
                     src={nextSlide.image}
@@ -402,28 +443,25 @@ function MobileHomeHero({
               </Link>
 
               <div
-                className="flex items-center justify-center gap-0"
+                className="flex min-h-[1.125rem] items-center justify-center gap-0.5"
                 aria-label="Destination slides"
               >
-                {heroSlides.map((slide, index) => (
-                  <button
+                {centeredDots.map(({ distance, index, slide }) => (
+                  <motion.button
                     key={slide._id}
+                    layout
                     type="button"
                     onClick={() => onSelect(index)}
                     aria-label={`Show ${slide.name}`}
-                    aria-current={
-                      index === activeSlideIndex ? 'true' : undefined
-                    }
-                    className="grid h-[clamp(0.75rem,3.28vw,0.875rem)] w-[clamp(0.75rem,3.28vw,0.875rem)] place-items-center rounded-full"
+                    aria-current={distance === 0 ? 'true' : undefined}
+                    className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full"
+                    transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <span
-                      className={`block rounded-full transition-all duration-300 ${
-                        index === activeSlideIndex
-                          ? 'h-full w-full bg-[#DADDC5]'
-                          : 'h-[clamp(0.5rem,2.4vw,0.65rem)] w-[clamp(0.5rem,2.4vw,0.65rem)] bg-[#DADDC5]/75'
-                      }`}
+                      className="block rounded-full bg-[#DADDC5]"
+                      style={getDotStyle(distance)}
                     />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>

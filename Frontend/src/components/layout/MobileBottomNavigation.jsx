@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BookOpenText,
@@ -85,10 +85,8 @@ function NavigationItem({ icon: Icon, isActive, label, to }) {
 }
 
 export default function MobileBottomNavigation() {
-  const [isMapOverlapping, setIsMapOverlapping] = useState(false);
   const [isPackagesOpen, setIsPackagesOpen] = useState(false);
   const location = useLocation();
-  const navRef = useRef(null);
   const packagesActive = isPackagesPath(location.pathname);
 
   useEffect(() => {
@@ -103,52 +101,6 @@ export default function MobileBottomNavigation() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  useEffect(() => {
-    let frameId;
-
-    function updateMapOverlap() {
-      const nav = navRef.current;
-
-      if (!nav || window.matchMedia('(min-width: 768px)').matches) {
-        setIsMapOverlapping(false);
-        return;
-      }
-
-      const navZoneTop = window.innerHeight - nav.offsetHeight - 24;
-      const overlapsNavigation = [...document.querySelectorAll('[data-mobile-map]')].some(
-        (mapElement) => {
-          const bounds = mapElement.getBoundingClientRect();
-
-          return bounds.top < window.innerHeight && bounds.bottom > navZoneTop;
-        },
-      );
-
-      setIsMapOverlapping(overlapsNavigation);
-    }
-
-    function scheduleOverlapUpdate() {
-      window.cancelAnimationFrame(frameId);
-      frameId = window.requestAnimationFrame(updateMapOverlap);
-    }
-
-    const mutationObserver = new MutationObserver(scheduleOverlapUpdate);
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener('resize', scheduleOverlapUpdate);
-    window.addEventListener('scroll', scheduleOverlapUpdate, { passive: true });
-    scheduleOverlapUpdate();
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      mutationObserver.disconnect();
-      window.removeEventListener('resize', scheduleOverlapUpdate);
-      window.removeEventListener('scroll', scheduleOverlapUpdate);
-    };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (isMapOverlapping) setIsPackagesOpen(false);
-  }, [isMapOverlapping]);
 
   return (
     <>
@@ -210,14 +162,9 @@ export default function MobileBottomNavigation() {
       </AnimatePresence>
 
       <nav
-        ref={navRef}
         aria-label="Mobile navigation"
         style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-        className={`fixed left-1/2 z-[100] flex w-[clamp(18.5rem,92vw,24.375rem)] -translate-x-1/2 items-center rounded-full border border-[#FFFFFF]/15 bg-[#283A2C] p-1.5 text-[#F1FAEE] shadow-[0_20px_55px_rgba(0,0,0,0.30)] transition duration-300 md:hidden ${
-          isMapOverlapping
-            ? 'pointer-events-none translate-y-[calc(100%+2rem)] opacity-0'
-            : 'translate-y-0 opacity-100'
-        }`}
+        className="fixed left-1/2 z-[100] flex w-[clamp(18.5rem,92vw,24.375rem)] -translate-x-1/2 items-center rounded-full border border-[#FFFFFF]/15 bg-[#283A2C] p-1.5 text-[#F1FAEE] shadow-[0_20px_55px_rgba(0,0,0,0.30)] md:hidden"
       >
         <NavigationItem
           {...navigationItems[0]}
